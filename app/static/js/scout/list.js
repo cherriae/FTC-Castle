@@ -108,10 +108,10 @@ function exportToCSV() {
         'Match',
         'Team Number',
         'Alliance',
-        'Auto Coral (L1/L2/L3/L4)',
-        'Auto Algae (Net/Proc)',
-        'Teleop Coral (L1/L2/L3/L4)',
-        'Teleop Algae (Net/Proc)',
+        'Auto Classified (P/G)',
+        'Auto Overflow (P/G)',
+        'Teleop Classified (P/G)',
+        'Teleop Overflow (P/G)',
         'Climb',
         'Robot Disabled',
         'Notes',
@@ -127,10 +127,10 @@ function exportToCSV() {
         const {teamNumber} = row.dataset;
         const alliance = row.querySelector('td:nth-child(2) span').textContent.trim();
         const match = row.querySelector('td:nth-child(3)').textContent.trim();
-        const autoCoral = row.querySelector('td:nth-child(4)').textContent.trim();
-        const autoAlgae = row.querySelector('td:nth-child(5)').textContent.trim();
-        const teleopCoral = row.querySelector('td:nth-child(6)').textContent.trim();
-        const teleopAlgae = row.querySelector('td:nth-child(7)').textContent.trim();
+        const autoClassified = row.querySelector('td:nth-child(4)').textContent.trim();
+        const autoOverflow = row.querySelector('td:nth-child(5)').textContent.trim();
+        const teleopClassified = row.querySelector('td:nth-child(6)').textContent.trim();
+        const teleopOverflow = row.querySelector('td:nth-child(7)').textContent.trim();
         const climb = row.querySelector('td:nth-child(8)').textContent.trim();
         const robotDisabled = row.querySelector('td:nth-child(11) span').textContent.trim();
         const notes = (row.dataset.notes || '').replace(/,/g, ';').replace(/\n/g, ' ');
@@ -142,10 +142,10 @@ function exportToCSV() {
             match,
             teamNumber,
             alliance,
-            autoCoral,
-            autoAlgae,
-            teleopCoral,
-            teleopAlgae,
+            autoClassified,
+            autoOverflow,
+            teleopClassified,
+            teleopOverflow,
             climb,
             robotDisabled,
             `"${notes}"`,

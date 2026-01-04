@@ -104,25 +104,24 @@ class ScoutingManager(DatabaseManager):
                 "match_number": data["match_number"],
                 "alliance": alliance,
 
-                # Auto Coral scoring
-                "auto_coral_level1": int(data.get("auto_coral_level1", 0)),
-                "auto_coral_level2": int(data.get("auto_coral_level2", 0)),
-                "auto_coral_level3": int(data.get("auto_coral_level3", 0)),
-                "auto_coral_level4": int(data.get("auto_coral_level4", 0)),
+                # Auto Classified
+                "auto_purple_classified": int(data.get("auto_purple_classified", 0)),
+                "auto_green_classified": int(data.get("auto_green_classified", 0)),
+                
+                # Auto Overflow
+                "auto_purple_overflow": int(data.get("auto_purple_overflow", 0)),
+                "auto_green_overflow": int(data.get("auto_green_overflow", 0)),
 
-                # Teleop Coral scoring
-                "teleop_coral_level1": int(data.get("teleop_coral_level1", 0)),
-                "teleop_coral_level2": int(data.get("teleop_coral_level2", 0)),
-                "teleop_coral_level3": int(data.get("teleop_coral_level3", 0)),
-                "teleop_coral_level4": int(data.get("teleop_coral_level4", 0)),
+                # Teleop Classified
+                "teleop_purple_classified": int(data.get("teleop_purple_classified", 0)),
+                "teleop_green_classified": int(data.get("teleop_green_classified", 0)),
 
-                # Auto Algae scoring
-                "auto_algae_net": int(data.get("auto_algae_net", 0)),
-                "auto_algae_processor": int(data.get("auto_algae_processor", 0)),
+                # Teleop Overflow
+                "teleop_purple_overflow": int(data.get("teleop_purple_overflow", 0)),
+                "teleop_green_overflow": int(data.get("teleop_green_overflow", 0)),
 
-                # Teleop Algae scoring
-                "teleop_algae_net": int(data.get("teleop_algae_net", 0)),
-                "teleop_algae_processor": int(data.get("teleop_algae_processor", 0)),
+                # Pattern
+                "pattern_completed": data.get("pattern_completed", ""),
 
                 # Climb
                 "climb_type": data.get("climb_type", ""),
@@ -193,18 +192,15 @@ class ScoutingManager(DatabaseManager):
                     "team_number": 1,
                     "match_number": 1,
                     "event_code": 1,
-                    "auto_coral_level1": 1,
-                    "auto_coral_level2": 1,
-                    "auto_coral_level3": 1,
-                    "auto_coral_level4": 1,
-                    "teleop_coral_level1": 1,
-                    "teleop_coral_level2": 1,
-                    "teleop_coral_level3": 1,
-                    "teleop_coral_level4": 1,
-                    "auto_algae_net": 1,
-                    "auto_algae_processor": 1,
-                    "teleop_algae_net": 1,
-                    "teleop_algae_processor": 1,
+                    "auto_purple_classified": 1,
+                    "auto_green_classified": 1,
+                    "auto_purple_overflow": 1,
+                    "auto_green_overflow": 1,
+                    "teleop_purple_classified": 1,
+                    "teleop_green_classified": 1,
+                    "teleop_purple_overflow": 1,
+                    "teleop_green_overflow": 1,
+                    "pattern_completed": 1,
                     "climb_type": 1,
                     "climb_success": 1,
                     "robot_disabled": 1,
@@ -318,15 +314,24 @@ class ScoutingManager(DatabaseManager):
                 "match_number": data["match_number"],
                 "alliance": alliance,
                 
-                # Coral scoring
-                "coral_level1": int(data.get("coral_level1", 0)),
-                "coral_level2": int(data.get("coral_level2", 0)),
-                "coral_level3": int(data.get("coral_level3", 0)),
-                "coral_level4": int(data.get("coral_level4", 0)),
+                # Auto Classified
+                "auto_purple_classified": int(data.get("auto_purple_classified", 0)),
+                "auto_green_classified": int(data.get("auto_green_classified", 0)),
                 
-                # Algae scoring
-                "algae_net": int(data.get("algae_net", 0)),
-                "algae_processor": int(data.get("algae_processor", 0)),
+                # Auto Overflow
+                "auto_purple_overflow": int(data.get("auto_purple_overflow", 0)),
+                "auto_green_overflow": int(data.get("auto_green_overflow", 0)),
+                
+                # Teleop Classified
+                "teleop_purple_classified": int(data.get("teleop_purple_classified", 0)),
+                "teleop_green_classified": int(data.get("teleop_green_classified", 0)),
+                
+                # Teleop Overflow
+                "teleop_purple_overflow": int(data.get("teleop_purple_overflow", 0)),
+                "teleop_green_overflow": int(data.get("teleop_green_overflow", 0)),
+
+                # Pattern Completed
+                "pattern_completed": int(data.get("pattern_completed", 0)),
 
                 # Climb
                 "climb_type": data.get("climb_type", ""),
@@ -341,26 +346,6 @@ class ScoutingManager(DatabaseManager):
                 
                 # Notes
                 "notes": data.get("notes", ""),
-                
-                # Auto Coral scoring
-                "auto_coral_level1": int(data.get("auto_coral_level1", 0)),
-                "auto_coral_level2": int(data.get("auto_coral_level2", 0)),
-                "auto_coral_level3": int(data.get("auto_coral_level3", 0)),
-                "auto_coral_level4": int(data.get("auto_coral_level4", 0)),
-                
-                # Teleop Coral scoring
-                "teleop_coral_level1": int(data.get("teleop_coral_level1", 0)),
-                "teleop_coral_level2": int(data.get("teleop_coral_level2", 0)),
-                "teleop_coral_level3": int(data.get("teleop_coral_level3", 0)),
-                "teleop_coral_level4": int(data.get("teleop_coral_level4", 0)),
-                
-                # Auto Algae scoring
-                "auto_algae_net": int(data.get("auto_algae_net", 0)),
-                "auto_algae_processor": int(data.get("auto_algae_processor", 0)),
-                
-                # Teleop Algae scoring
-                "teleop_algae_net": int(data.get("teleop_algae_net", 0)),
-                "teleop_algae_processor": int(data.get("teleop_algae_processor", 0)),
             }
 
             result = self.db.team_data.update_one(
@@ -432,54 +417,6 @@ class ScoutingManager(DatabaseManager):
         except Exception as e:
             logger.error(f"Error checking team data: {str(e)}")
             return False
-
-    @with_mongodb_retry(retries=3, delay=2)
-    def get_team_stats(self, team_number):
-        """Get comprehensive stats for a team"""
-        try:
-            pipeline = [
-                {"$match": {"team_number": int(team_number)}},
-                {
-                    "$group": {
-                        "_id": "$team_number",
-                        "matches_played": {"$sum": 1},
-                        "total_coral": {
-                            "$sum": {
-                                "$add": [
-                                    "$coral_level1",
-                                    "$coral_level2",
-                                    "$coral_level3",
-                                    "$coral_level4"
-                                ]
-                            }
-                        },
-                        "total_algae": {
-                            "$sum": {"$add": ["$algae_net", "$algae_processor"]}
-                        },
-                        "successful_climbs": {
-                            "$sum": {"$cond": ["$climb_success", 1, 0]}
-                        },
-                        "total_points": {"$sum": "$total_points"}
-                    }
-                }
-            ]
-            
-            result = list(self.db.team_data.aggregate(pipeline))
-            if not result:
-                return {
-                    "matches_played": 0,
-                    "total_coral": 0,
-                    "total_algae": 0,
-                    "successful_climbs": 0,
-                    "total_points": 0
-                }
-            
-            stats = result[0]
-            stats.pop("_id")  # Remove MongoDB ID
-            return stats
-        except Exception as e:
-            logger.error(f"Error getting team stats: {str(e)}")
-            return None
 
     @with_mongodb_retry(retries=3, delay=2)
     def get_team_matches(self, team_number):

@@ -1,14 +1,14 @@
 {
   "name": "Castle Scouting App",
   "short_name": "Castle",
-  "description": "FRC Team Scouting App",
+  "description": "FTC/FRC Team Scouting App",
   "start_url": "/",
   "display": "fullscreen",
   "background_color": "#ffffff",
   "theme_color": "#3b82f6",
   "id": "com.team334.castle",
   "scope": "/",
-  "categories": ["FRC", "Scouting", "Scouting App", "Team 334"],
+  "categories": ["FTC", "FRC", "Scouting", "Scouting App", "Team 334"],
   
   "icons": [
     {

@@ -87,6 +87,8 @@ document.addEventListener('DOMContentLoaded', function() {
         initialThickness: 3,
         maxPanDistance: 1000,
         backgroundImage: '/static/images/field-2026.webp', // credits Team Juice 16236: https://www.reddit.com/r/FTC/comments/1nalob0/decode_custom_field_images_meepmeep_compatible/
+        fieldWidth: 1440,
+        fieldHeight: 1440,
         readonly: false
     });
 
@@ -424,7 +426,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // TBA Integration
+    // FTCScout Integration
     const eventSelect = document.getElementById('event_select');
     const matchSelect = document.getElementById('match_select');
     const teamSelect = document.getElementById('team_select');
@@ -586,7 +588,7 @@ document.addEventListener('DOMContentLoaded', function() {
     Object.entries(events).forEach(([name, data]) => {
         const option = document.createElement('option');
         option.value = name;  // Use event name as value for the server
-        option.dataset.key = data.key;  // Store TBA key in dataset for API calls
+        option.dataset.key = data.key;  // Store Event key in dataset for API calls
         option.textContent = name;  // Name already includes the time indicator
         eventSelect.appendChild(option);
     });
@@ -613,7 +615,7 @@ document.addEventListener('DOMContentLoaded', function() {
             matchSearchable.clear();
 
             // Fetch matches for selected event
-            const response = await fetch(`/api/tba/matches/${selectedEventKey}`);
+            const response = await fetch(`/api/ftc/matches/${selectedEventKey}`);
             if (!response.ok) {
                 throw new Error('Failed to fetch matches');
             }
@@ -639,6 +641,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Add matches in order: Qualification, Semi-Finals, Finals
             const levels = {
                 'qm': 'Qualification',
+                'de': 'Double Elimination',
                 'sf': 'Semi-Finals',
                 'f': 'Finals'
             };
@@ -664,6 +667,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             // Format display text based on match type
                             if (level === 'qm') {
                                 option.textContent = `Qual ${match.match_number}`;
+                            } else if (level === 'de') {
+                                option.textContent = `Match ${match.match_number}`;
                             } else if (level === 'sf') {
                                 option.textContent = `Semi-Finals ${match.set_number}`;
                             } else if (level === 'f') {
@@ -707,7 +712,7 @@ document.addEventListener('DOMContentLoaded', function() {
         redGroup.label = 'Red Alliance';
         match.red.forEach(team => {
             const option = document.createElement('option');
-            const teamNumber = team.replace('frc', '');
+            const teamNumber = team.replace('ftc', '');
             option.value = teamNumber;
             option.textContent = `Team ${teamNumber}`;
             option.dataset.alliance = 'red';
@@ -720,7 +725,7 @@ document.addEventListener('DOMContentLoaded', function() {
         blueGroup.label = 'Blue Alliance';
         match.blue.forEach(team => {
             const option = document.createElement('option');
-            const teamNumber = team.replace('frc', '');
+            const teamNumber = team.replace('ftc', '');
             option.value = teamNumber;
             option.textContent = `Team ${teamNumber}`;
             option.dataset.alliance = 'blue';
