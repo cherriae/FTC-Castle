@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Castle{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@popperjs/core@2"></script>
+    
+    <link rel="preload" href="{{ url_for('static', filename='fonts/Richardson Brand Accelerator.otf') }}" as="font" type="font/otf" crossorigin>
+    <link rel="preload" href="{{ url_for('static', filename='fonts/oxanium-vrb.ttf') }}" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}">
+    {% block head %}{% endblock %}
+
+    <link rel="icon" href="{{ url_for('static', filename='logo.png') }}" type="image/png"/>
+    <link rel="shortcut icon" href="{{ url_for('static', filename='logo.png') }}" type="image/png"/>
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='logo.png') }}" type="image/png"/>
+    <link rel="manifest" href="/static/manifest.json"/>
+
+    <meta property="twitter:image" content="{{ url_for('static', filename='logo.png') }}">
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:title" content="Castle">
+    <meta property="twitter:description" content="The Official Scouting App Presented By Team 334">
+    
+    <meta property="og:site_name" content="Castle | 334 Scouting App">
+    <meta property="og:title" content="Castle"/>
+    <meta property="og:description"
+        content="The Official Scouting App Presented By Team 334"/>
+    <meta property="og:image" content="{{ url_for('static', filename='logo.png') }}"/>
+    <meta property="og:url" content="https://techknights.vercel.app"/>
+    <meta name="description" content="The Official Scouting App Presented By Team 334"/>
+
+
+    <meta name="viewport" content="initial-scale=1, width=device-width"/>
+    <meta name="theme-color" content="#3b82f6">
+    <link rel="apple-touch-icon" href="/static/icons/icon-192x192.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Scout">
+
+    <style>
+    /* Font Loading */
+    @font-face {
+        font-family: 'MainFont';
+        src: url('/static/fonts/Richardson Brand Accelerator.otf') format('opentype');
+        font-display: swap;
+        font-weight: normal;
+        font-style: normal;
+    }
+
+    @font-face {
+        font-family: 'SecondaryFont';
+        src: url('/static/fonts/oxanium-vrb.ttf') format('truetype');
+        font-display: swap;
+        font-weight: normal;
+        font-style: normal;
+    }
+    </style>
+</head>
+
+<body class="bg-gray-100 min-h-screen flex flex-col">
+    <div class="flex justify-center items-center">
+    <nav class="z-50 box-border max-w-6xl shadow-lg hidden sm:block bg-blue-100 rounded-full opacity-85 mt-2">
+        <div class="max-w-6xl mx-auto px-4">
+            <div class="flex justify-between items-center gap-10">
+                <div class="flex space-x-4 text-center">
+                    <a href="{{ url_for('index') }}" class="flex items-center text-center hover:text-blue-500">
+                        <img src="{{ url_for('static', filename='logo.png') }}" alt="Castle Logo" class="h-12">
+                        <p class="py-4 px-2 text-center -ml-4">Castle</p>
+                    </a>
+                    <!-- Offline Status Indicator -->
+                    <div id="nav-offline-indicator" class="hidden py-1 px-3 bg-amber-100 border border-amber-300 rounded-full flex items-center space-x-2 text-amber-700 font-medium relative group">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        <span>Offline Mode</span>
+                        <!-- Tooltip that appears on hover -->
+                        <div class="hidden group-hover:block absolute top-full left-1/2 transform -translate-x-1/2 mt-1 px-3 py-2 bg-gray-800 text-white text-xs font-normal rounded-lg shadow-lg whitespace-nowrap z-50">
+                            Using Cached Content Only Accessed Before
+                            <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 h-2 w-2 rotate-45 bg-gray-800"></div>
+                        </div>
+                    </div>
+                    {% if current_user.is_authenticated %}
+                        {% if current_user.teamNumber %}
+                            <a href="{{ url_for('scouting.home') }}" class="py-4 px-2 hover:text-blue-500 text-center">Scout</a>
+                            <a href="{{ url_for('scouting.lighthouse') }}" class="py-4 px-2 hover:text-purple-500 text-center">Compare</a>
+                            <a href="{{ url_for('team.manage') }}" class="py-4 px-2 hover:text-blue-500 text-center">Team</a>
+                        {% else %}
+                            <a href="{{ url_for('team.join') }}" class="py-4 px-2 hover:text-green-500 text-center">Join Team</a>
+                        {% endif %}
+                    {% endif %}
+                </div>
+                <div class="flex space-x-4">
+                    {% if current_user.is_authenticated %}
+                        <div class="relative flex items-center space-x-2">
+                            <button id="userDropdownButton" class="flex items-center space-x-2 hover:text-blue-500">
+                                <img src="{{ url_for('auth.profile_picture', user_id=current_user.get_id()) }}" 
+                                     alt="Profile Picture" 
+                                     class="w-10 h-10 rounded-full">
+                                <span class="py-4 px-2">{{current_user.username}}</span>
+                                <svg class="w-4 h-4 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+                            <!-- Dropdown menu -->
+                            <div id="userDropdown" class="hidden absolute right-0 top-full mt-2 w-32 text-center bg-white rounded-xl shadow-lg py-2 z-50">
+                                <a href="{{ url_for('auth.profile', username=current_user.username) }}" 
+                                   class="block px-4 py-2 text-gray-800 hover:bg-blue-50 hover:text-blue-500">
+                                    Profile
+                                </a>
+                                <a href="{{ url_for('auth.settings') }}" 
+                                   class="block px-4 py-2 text-gray-800 hover:bg-blue-50 hover:text-blue-500">
+                                    Settings
+                                </a>
+                                <div class="border-t border-gray-100 my-1"></div>
+                                <a href="{{ url_for('auth.logout') }}" 
+                                   class="block px-4 py-2 text-red-600 hover:bg-red-50">
+                                    Logout
+                                </a>
+                            </div>
+                        </div>
+                    {% else %}
+                        <a href="{{ url_for('auth.login') }}" class="py-4 px-2 hover:text-blue-500">Login</a>
+                        <a href="{{ url_for('auth.register') }}" class="py-4 px-2 hover:text-blue-500">Register</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+    </div>
+    <nav class="shadow-lg sm:hidden rounded-xl bg-blue-100 fixed left-0 top-0 w-full z-50">
+        <div class="max-w-6xl mx-auto px-4">
+          <div class="flex justify-between items-center py-2 rounded-xl">
+            <a href="{{ url_for('index') }}" class="font-bold flex items-center justify-center flex-row">
+              <img src="{{ url_for('static', filename='logo.png') }}" alt="Castle Logo" class="h-10">
+              <span class="ml-2 text-lg">Castle</span>
+            </a>
+            <button class="mobile-menu-button p-2 hover:bg-blue-200 rounded-lg transition-colors focus:outline-none">
+              <svg class="w-6 h-6" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor">
+                <path d="M4 6h16M4 12h16M4 18h16"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="mobile-menu hidden bg-white border-t">
+          <div class="py-2 px-4 space-y-1">
+            <a href="{{ url_for('index') }}" class="block py-3 px-4 hover:bg-blue-50 rounded-lg transition-colors">Home</a>
+            <!-- Mobile Offline Status Indicator -->
+            <div id="mobile-offline-indicator" class="hidden py-3 px-4 bg-amber-100 border border-amber-300 rounded-lg flex items-center space-x-2 text-amber-700 font-medium">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <span>Offline Mode - Cached Content Active</span>
+            </div>
+            {% if current_user.is_authenticated %}
+              {% if current_user.teamNumber %}
+                  <a href="{{ url_for('scouting.home') }}" class="block py-3 px-4 hover:bg-blue-50 rounded-lg transition-colors">Scout</a>
+                  <a href="{{ url_for('scouting.lighthouse') }}" class="block py-3 px-4 hover:bg-blue-50 rounded-lg transition-colors">Compare</a>
+                  <a href="{{ url_for('team.manage') }}" class="block py-3 px-4 hover:bg-blue-50 rounded-lg transition-colors">Team</a>
+              {% else %}
+                  <a href="{{ url_for('team.join') }}" class="block py-3 px-4 hover:bg-green-50 text-green-600 rounded-lg transition-colors">Join Team</a>
+              {% endif %}
+              <hr class="my-2 border-gray-200">
+              <div class="px-4 py-3">
+                  <div class="flex items-center space-x-3">
+                      <img src="{{ url_for('auth.profile_picture', user_id=current_user.get_id()) }}" 
+                           alt="Profile Picture" 
+                           class="w-10 h-10 rounded-full">
+                      <a href="{{ url_for('auth.profile', username=current_user.username) }}" 
+                         class="text-gray-800 hover:text-blue-500 transition-colors">{{current_user.username}}</a>
+                  </div>
+              </div>
+              <a href="{{ url_for('auth.settings') }}" class="block py-3 px-4 hover:bg-blue-50 rounded-lg transition-colors">Settings</a>
+              <a href="{{ url_for('auth.logout') }}" class="block py-3 px-4 hover:bg-red-50 text-red-600 rounded-lg transition-colors">Logout</a>
+            {% else %}
+              <hr class="my-2 border-gray-200">
+              <a href="{{ url_for('auth.login') }}" class="block py-3 px-4 hover:bg-blue-50 rounded-lg transition-colors">Login</a>
+              <a href="{{ url_for('auth.register') }}" class="block py-3 px-4 hover:bg-blue-50 rounded-lg transition-colors">Register</a>
+            {% endif %}
+          </div>
+        </div>
+    </nav>
+
+    <div class="flex-grow">
+        <div class="container mx-auto px-4 sm:my-10 my-20">
+            <div class="container">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% set category, message = messages[-1] %}
+                        <div class="fixed bottom-6 left-1/2 -translate-x-1/2 sm:left-auto sm:right-6 sm:-translate-x-0 z-50 w-[90%] sm:w-full max-w-xl min-h-[60px] sm:min-h-[80px] mx-auto sm:mx-0  animate-fade-in-up">
+                            <div class="flex items-center p-6 rounded-lg shadow-xl {{ 
+                                'bg-red-50 text-red-800 border-2 border-red-200' if category == 'error' else 
+                                'bg-green-50 text-green-800 border-2 border-green-200' 
+                            }}">
+                                {% if category == 'error' %}
+                                    <svg class="w-6 h-6 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                                    </svg>
+                                {% else %}
+                                    <svg class="w-6 h-6 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                    </svg>
+                                {% endif %}
+                                <p class="text-base font-medium">{{ message }}</p>
+                                <button onclick="this.parentElement.remove()" class="ml-auto -mx-1.5 -my-1.5 rounded-lg p-1.5 inline-flex h-8 w-8 {{ 
+                                    'text-red-500 hover:bg-red-100' if category == 'error' else 
+                                    'text-green-500 hover:bg-green-100' 
+                                }}">
+                                    <span class="sr-only">Dismiss</span>
+                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endwith %}
+            </div>
+            {% block content %}{% endblock %}
+            
+            {% if request.endpoint == 'index' %}
+            <div class="absolute top-20 right-10 w-20 h-20 bg-blue-500 rounded-full opacity-20 animate-float z-10"></div>
+            <div class="absolute bottom-10 left-10 w-16 h-16 bg-blue-600 rounded-full opacity-25 animate-float delay-200 z-10"></div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-blue-100 text-gray-800 py-4 mt-8 border-t border-blue-200">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col space-y-4 md:space-y-0 md:flex-row md:justify-between md:items-center">
+                <div class="text-center">
+                    <p class="text-sm">© 2024-2025 <a href="https://bthsrobotics.com" class="text-blue-600 hover:text-blue-700 transition-colors">Team 334</a></p>
+                </div>
+                <div class="hidden sm:flex flex-col sm:flex-row items-center justify-center gap-2">
+                    <a href="https://github.com/team334/Castle" target="_blank" rel="noopener noreferrer" 
+                       class="text-gray-700 hover:text-blue-600 transition-colors">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                        </svg>
+                    </a>
+                    <p class="text-sm text-center">This project is open source. Help us improve it!</p>
+                </div>
+                <div class="hidden sm:block text-center">
+                    <a href="https://cherriae.github.io" target="_blank" rel="noopener noreferrer" 
+                       class="text-gray-700 hover:text-blue-600 transition-colors text-sm">
+                        Created by Jerry
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const menuButton = document.querySelector('.mobile-menu-button');
+        const mobileMenu = document.querySelector('.mobile-menu');
+
+        menuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+    </script>
+    <style>
+        @keyframes fade-in-up {
+            0% {
+                opacity: 0;
+                transform: translateY(20px) translateX(-50%);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) translateX(-50%);
+            }
+        }
+
+        @keyframes fade-in-left {
+            0% {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .animate-fade-in-up {
+            animation: fade-in-up 0.5s ease-out;
+        }
+
+        @media (min-width: 640px) {
+            .animate-fade-in-up {
+                animation: fade-in-left 0.5s ease-out;
+            }
+        }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const flashMessages = document.querySelectorAll('.animate-fade-in-up > div');
+            flashMessages.forEach(message => {
+                setTimeout(() => {
+                    message.style.opacity = '0';
+                    message.style.transform = 'translateY(20px)';
+                    message.style.transition = 'all 0.5s ease-out';
+                    setTimeout(() => message.remove(), 500);
+                }, 5000);
+            });
+        });
+    </script>
+    <script>
+        window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
+        window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+    </script>
+    <script defer src="/_vercel/insights/script.js"></script>
+    <script defer src="/_vercel/speed-insights/script.js"></script>
+    <script>
+        // User dropdown functionality
+        const userDropdownButton = document.getElementById('userDropdownButton');
+        const userDropdown = document.getElementById('userDropdown');
+        const dropdownArrow = userDropdownButton?.querySelector('svg');
+
+        if (userDropdownButton && userDropdown) {
+            userDropdownButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                userDropdown.classList.toggle('hidden');
+                dropdownArrow.style.transform = userDropdown.classList.contains('hidden') ? '' : 'rotate(180deg)';
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!userDropdownButton.contains(e.target)) {
+                    userDropdown.classList.add('hidden');
+                    dropdownArrow.style.transform = '';
+                }
+            });
+        }
+    </script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+        // Check offline status immediately when script runs (before any events)
+        (function checkOfflineStatus() {
+            if (!navigator.onLine || localStorage.getItem('offlineMode') === 'true') {
+                document.body.classList.add('offline');
+                // We'll call showOfflineIndicators as soon as DOM is ready
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', showOfflineIndicatorsImmediately);
+                } else {
+                    showOfflineIndicatorsImmediately();
+                }
+            }
+        })();
+        
+        function showOfflineIndicatorsImmediately() {
+            const navOfflineIndicator = document.getElementById('nav-offline-indicator');
+            if (navOfflineIndicator) {
+                navOfflineIndicator.classList.remove('hidden');
+            }
+            
+            const mobileOfflineIndicator = document.getElementById('mobile-offline-indicator');
+            if (mobileOfflineIndicator) {
+                mobileOfflineIndicator.classList.remove('hidden');
+            }
+            
+            // Store offline state in localStorage to persist across page changes
+            localStorage.setItem('offlineMode', 'true');
+        }
+
+        if ('serviceWorker' in navigator) {
+            // Track the current version of content
+            const APP_VERSION = '{{ request.args.get("v", "1.0") }}';
+            
+            // Store the current version in localStorage
+            if (!localStorage.getItem('appVersion') || 
+                localStorage.getItem('appVersion') !== APP_VERSION) {
+                // Version changed, clear caches
+                if ('caches' in window) {
+                    caches.keys().then(cacheNames => {
+                        return Promise.all(
+                            cacheNames.map(cacheName => {
+                                return caches.delete(cacheName);
+                            })
+                        );
+                    });
+                }
+                localStorage.setItem('appVersion', APP_VERSION);
+            }
+            
+            window.addEventListener('load', () => {
+                const registerServiceWorker = async () => {
+                    try {
+                        const registration = await navigator.serviceWorker.register('/service-worker.js', {
+                            scope: '/',
+                            updateViaCache: 'none' // Don't use cached service worker
+                        });
+                        
+                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                        
+                        // Check if there's an updated service worker waiting
+                        if (registration.waiting) {
+                            console.log('New service worker is waiting to activate');
+                            notifyUserOfUpdate(registration.waiting);
+                        }
+                        
+                        // Listen for new service worker installation
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+                            console.log('Service Worker update found!');
+                            
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    console.log('New content is available; please refresh.');
+                                    notifyUserOfUpdate(newWorker);
+                                }
+                            });
+                        });
+                        
+                        // Force update check every 5 minutes if the tab remains open
+                        setInterval(() => {
+                            registration.update();
+                            console.log('Checking for service worker updates...');
+                        }, 5 * 60 * 1000);
+                        
+                        // Check for updates immediately
+                        setTimeout(() => {
+                            registration.update();
+                        }, 3000);
+                        
+                        // Listen for controller change (new service worker took over)
+                        navigator.serviceWorker.addEventListener('controllerchange', () => {
+                            console.log('New service worker controller, reloading for fresh content');
+                            window.location.reload();
+                        });
+                        
+                        // Listen for messages from the service worker
+                        navigator.serviceWorker.addEventListener('message', event => {
+                            if (event.data && event.data.type === 'OFFLINE_STATUS') {
+                                if (event.data.isOffline) {
+                                    document.body.classList.add('offline');
+                                    showOfflineIndicators();
+                                } else {
+                                    document.body.classList.remove('offline');
+                                    hideOfflineIndicators();
+                                }
+                            }
+                        });
+                        
+                    } catch (error) {
+                        console.error('ServiceWorker registration failed: ', error);
+                    }
+                };
+                
+                registerServiceWorker();
+            });
+            
+            // Function to notify the user about an update
+            function notifyUserOfUpdate(worker) {
+                const updateBanner = document.createElement('div');
+                updateBanner.id = 'update-banner';
+                updateBanner.classList.add('fixed', 'bottom-0', 'left-0', 'right-0', 'bg-blue-500', 'text-white', 'p-4', 'flex', 'justify-between', 'items-center', 'z-50');
+                updateBanner.innerHTML = `
+                    <div>
+                        <strong>Update Available!</strong> Refresh to see the latest version.
+                    </div>
+                    <div class="flex space-x-2">
+                        <button id="update-now" class="bg-white text-blue-500 px-4 py-2 rounded hover:bg-blue-50 transition-colors">
+                            Update Now
+                        </button>
+                        <button id="update-later" class="text-white border border-white px-4 py-2 rounded hover:bg-blue-600 transition-colors">
+                            Later
+                        </button>
+                    </div>
+                `;
+                
+                document.body.appendChild(updateBanner);
+                
+                document.getElementById('update-now').addEventListener('click', () => {
+                    worker.postMessage({ action: 'skipWaiting' });
+                    updateBanner.remove();
+                });
+                
+                document.getElementById('update-later').addEventListener('click', () => {
+                    updateBanner.remove();
+                });
+            }
+            
+            // Function to show offline indicators
+            function showOfflineIndicators() {
+                // Show offline indicators in top navigation
+                const navOfflineIndicator = document.getElementById('nav-offline-indicator');
+                if (navOfflineIndicator) {
+                    navOfflineIndicator.classList.remove('hidden');
+                }
+                
+                // Show mobile offline indicator
+                const mobileOfflineIndicator = document.getElementById('mobile-offline-indicator');
+                if (mobileOfflineIndicator) {
+                    mobileOfflineIndicator.classList.remove('hidden');
+                }
+                
+                // Store offline state in localStorage to persist across page changes
+                localStorage.setItem('offlineMode', 'true');
+            }
+            
+            // Function to hide offline indicators
+            function hideOfflineIndicators() {
+                // Hide offline indicators in top navigation
+                const navOfflineIndicator = document.getElementById('nav-offline-indicator');
+                if (navOfflineIndicator) {
+                    navOfflineIndicator.classList.add('hidden');
+                }
+                
+                // Hide mobile offline indicator
+                const mobileOfflineIndicator = document.getElementById('mobile-offline-indicator');
+                if (mobileOfflineIndicator) {
+                    mobileOfflineIndicator.classList.add('hidden');
+                }
+                
+                // Remove offline state from localStorage
+                localStorage.removeItem('offlineMode');
+            }
+            
+            // Add offline/online detection
+            window.addEventListener('online', () => {
+                document.body.classList.remove('offline');
+                hideOfflineIndicators();
+                
+                // Sync any pending requests and check for updates
+                navigator.serviceWorker.ready.then(registration => {
+                    registration.update();
+                });
+            });
+            
+            window.addEventListener('offline', () => {
+                document.body.classList.add('offline');
+                showOfflineIndicators();
+            });
+            
+            // The following check runs on every page load, including refreshes and navigation
+            // It's redundant with the IIFE at the top but provides a fallback
+            document.addEventListener('DOMContentLoaded', () => {
+                // Double-check offline status from localStorage and network state
+                if (localStorage.getItem('offlineMode') === 'true' || !navigator.onLine) {
+                    document.body.classList.add('offline');
+                    showOfflineIndicators();
+                }
+                
+                // Also double-check online status to handle case where connection was restored
+                // but localStorage wasn't properly cleared
+                if (navigator.onLine && localStorage.getItem('offlineMode') === 'true') {
+                    // Verify online status by making a tiny request
+                    fetch('/static/logo.png?checkOnline=' + Date.now(), { 
+                        method: 'HEAD',
+                        cache: 'no-store'
+                    })
+                    .then(() => {
+                        // If fetch succeeds, we're definitely online
+                        hideOfflineIndicators();
+                    })
+                    .catch(() => {
+                        // If fetch fails, we're probably still offline
+                        showOfflineIndicators();
+                    });
+                }
+            });
+            
+            // Add offline support to fetch requests
+            const originalFetch = window.fetch;
+            window.fetch = function(input, init) {
+                return originalFetch(input, init)
+                    .then(response => {
+                        // If a successful response, we must be online
+                        if (response.ok && localStorage.getItem('offlineMode') === 'true') {
+                            // Verify we're really online with another small fetch
+                            // This prevents false positives from cached responses
+                            fetch('/static/logo.png?checkOnline=' + Date.now(), { 
+                                method: 'HEAD',
+                                cache: 'no-store'
+                            })
+                            .then(() => {
+                                // If this succeeds, we're online
+                                document.body.classList.remove('offline');
+                                hideOfflineIndicators();
+                            })
+                            .catch(() => {
+                                // If it fails, we're still offline
+                            });
+                        }
+                        return response;
+                    })
+                    .catch(error => {
+                        console.error('Fetch error:', error);
+                        
+                        if (!navigator.onLine) {
+                            // Ensure the offline indicator is shown
+                            document.body.classList.add('offline');
+                            showOfflineIndicators();
+                            
+                            // For JSON requests, return a valid offline response
+                            if (init && init.headers && 
+                                (init.headers.get('Accept') === 'application/json' || 
+                                 init.headers.get('Content-Type') === 'application/json')) {
+                                return new Response(JSON.stringify({
+                                    error: 'offline',
+                                    message: 'You are offline. This action will be synced when you reconnect.'
+                                }), {
+                                    status: 200,
+                                    headers: { 'Content-Type': 'application/json' }
+                                });
+                            }
+                        }
+                        
+                        throw error;
+                    });
+            };
+        }
+    </script>
+</body>
+</html>
