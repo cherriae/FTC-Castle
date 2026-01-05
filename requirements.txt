@@ -13,3 +13,4 @@ py-vapid
 cachetools
 Flask-CORS
 colorlog
+pillow

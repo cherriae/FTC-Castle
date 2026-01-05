@@ -10,8 +10,8 @@ author_email = "techrobotics334@gmail.com"
 
 [tool.briefcase.app.castle]
 formal_name = "Castle"
-description = "Scouting App for Team 334"
-long_description = """All In One Scouting App for FIRST Robotics Competition by Team 334.
+description = "Scouting App for Team 27705"
+long_description = """All In One Scouting App for FIRST Robotics Competition by Team 27705.
 """
 icon = "src/castle/resources/logo"
 

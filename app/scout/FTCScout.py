@@ -148,6 +148,46 @@ class FTCScout:
             return None
 
     @lru_cache(maxsize=100)
+    def get_team_events(self, team: int, season: int) -> Union[list, None]:
+        """Get events for a team in a season
+        
+        Args:
+            team: Team number
+            season: Season year
+        """
+        try:
+            response = requests.get(
+                f"{self._API_URI}/teams/{team}/events/{season}",
+                headers=self.headers,
+                timeout=self.timeout
+            )
+
+            return response.json() if response.status_code == 200 else None
+        except Exception as e:
+            logger.error(f"Error fetching team events from FTCScout: {e}")
+            return None
+
+    @lru_cache(maxsize=100)
+    def get_event_details(self, season: int, code: str) -> Union[dict, None]:
+        """Get event details
+        
+        Args:
+            season: Season year
+            code: Event code
+        """
+        try:
+            response = requests.get(
+                f"{self._API_URI}/events/{season}/{code}",
+                headers=self.headers,
+                timeout=self.timeout
+            )
+
+            return response.json() if response.status_code == 200 else None
+        except Exception as e:
+            logger.error(f"Error fetching event details from FTCScout: {e}")
+            return None
+
+    @lru_cache(maxsize=100)
     def get_quick_stats(self, team: int, season: int = None, region: str = None) -> Union[dict, None]:
         """Get quick stats for a team
         
@@ -173,5 +213,85 @@ class FTCScout:
             return response.json() if response.status_code == 200 else None
         except Exception as e:
             logger.error(f"Error fetching quick stats from FTCScout: {e}")
+            return None
+
+    @lru_cache(maxsize=100)
+    def get_event_rankings(self, season: int, code: str) -> Union[list, None]:
+        """Get event rankings using GraphQL
+        
+        Args:
+            season: Season year
+            code: Event code
+        """
+        try:
+            # Construct query with dynamic fragment based on season
+            # Note: This assumes the API naming convention follows the season year
+            fragment_name = f"TeamEventStats{season}"
+            
+            # Use alias for matchesPlayed to normalize output
+            query = """
+            query EventTeams($season: Int!, $code: String!) {
+                eventByCode(season: $season, code: $code) {
+                    teams {
+                        teamNumber
+                        stats {
+                            ... on """ + fragment_name + """ {
+                                rank
+                                wins
+                                losses
+                                ties
+                                matchesPlayed: qualMatchesPlayed
+                            }
+                        }
+                    }
+                }
+            }
+            """
+            
+            variables = {
+                "season": season,
+                "code": code
+            }
+            
+            response = requests.post(
+                self._GRAPHQL_URI,
+                headers={
+                    "accept": "application/json",
+                    "content-type": "application/json"
+                },
+                json={"query": query, "variables": variables},
+                timeout=self.timeout
+            )
+
+            if response.status_code == 200:
+                data = response.json()
+                if 'errors' in data:
+                    logger.error(f"GraphQL errors: {data['errors']}")
+                    return None
+                    
+                teams_data = data.get('data', {}).get('eventByCode', {}).get('teams', [])
+                
+                # Transform to expected format
+                rankings = []
+                for t in teams_data:
+                    stats = t.get('stats')
+                    if stats:
+                        rankings.append({
+                            'teamNumber': t.get('teamNumber'),
+                            'rank': stats.get('rank'),
+                            'matchesPlayed': stats.get('matchesPlayed'),
+                            'wins': stats.get('wins'),
+                            'losses': stats.get('losses'),
+                            'ties': stats.get('ties')
+                        })
+                
+                # Sort by rank
+                rankings.sort(key=lambda x: x.get('rank', 999))
+                return rankings
+            else:
+                logger.error(f"API returned status {response.status_code}: {response.text[:200]}")
+                return None
+        except Exception as e:
+            logger.error(f"Error fetching rankings from FTCScout: {e}")
             return None
 

@@ -31,13 +31,13 @@
             <select id="rankingSelect" 
                     onchange="changeRanking(this.value)" 
                     class="block w-48 px-3 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
-                <option value="coral" {% if current_sort == 'coral' %}selected{% endif %}>Most Coral (Total)</option>
-                <option value="auto_coral" {% if current_sort == 'auto_coral' %}selected{% endif %}>Most Coral (Auto)</option>
-                <option value="teleop_coral" {% if current_sort == 'teleop_coral' %}selected{% endif %}>Most Coral (Teleop)</option>
-                <option value="algae" {% if current_sort == 'algae' %}selected{% endif %}>Most Algae (Total)</option>
-                <option value="auto_algae" {% if current_sort == 'auto_algae' %}selected{% endif %}>Most Algae (Auto)</option>
-                <option value="teleop_algae" {% if current_sort == 'teleop_algae' %}selected{% endif %}>Most Algae (Teleop)</option>
-                <option value="deep_climb" {% if current_sort == 'deep_climb' %}selected{% endif %}>Deep Climb %</option>
+                <option value="total" {% if current_sort == 'total' %}selected{% endif %}>Total Score</option>
+                <option value="auto" {% if current_sort == 'auto' %}selected{% endif %}>Auto Score</option>
+                <option value="teleop" {% if current_sort == 'teleop' %}selected{% endif %}>Teleop Score</option>
+                <option value="climb" {% if current_sort == 'climb' %}selected{% endif %}>Any Climb %</option>
+                <option value="park" {% if current_sort == 'park' %}selected{% endif %}>Park %</option>
+                <option value="complete_park" {% if current_sort == 'complete_park' %}selected{% endif %}>Complete Park %</option>
+                <option value="stacked_park" {% if current_sort == 'stacked_park' %}selected{% endif %}>Stacked Park %</option>
             </select>
         </div>
     </div>
@@ -52,19 +52,11 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Matches</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Auto Coral
+                                Auto Scoring
                                 <span class="text-xs text-gray-400 block">avg per match</span>
                             </th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Auto Algae
-                                <span class="text-xs text-gray-400 block">avg per match</span>
-                            </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Teleop Coral
-                                <span class="text-xs text-gray-400 block">avg per match</span>
-                            </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Teleop Algae
+                                Teleop Scoring
                                 <span class="text-xs text-gray-400 block">avg per match</span>
                             </th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -72,7 +64,7 @@
                                 <span class="text-xs text-gray-400 block">times disabled</span>
                             </th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Climb Stats
+                                Endgame Stats
                                 <span class="text-xs text-gray-400 block">success rates</span>
                             </th>
                         </tr>
@@ -86,39 +78,19 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ team.matches_played }}</td>
                             
-                            <!-- Auto Coral -->
+                            <!-- Auto Stats -->
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm space-y-1">
-                                    <div class="text-gray-500">L1: {{ "%.1f"|format(team.auto_coral_stats.level1) }}</div>
-                                    <div class="text-gray-500">L2: {{ "%.1f"|format(team.auto_coral_stats.level2) }}</div>
-                                    <div class="text-gray-500">L3: {{ "%.1f"|format(team.auto_coral_stats.level3) }}</div>
-                                    <div class="text-gray-500">L4: {{ "%.1f"|format(team.auto_coral_stats.level4) }}</div>
+                                    <div class="text-gray-500">Purple: {{ "%.1f"|format(team.auto_stats.purple_classified) }} / {{ "%.1f"|format(team.auto_stats.purple_overflow) }}</div>
+                                    <div class="text-gray-500">Green: {{ "%.1f"|format(team.auto_stats.green_classified) }} / {{ "%.1f"|format(team.auto_stats.green_overflow) }}</div>
                                 </div>
                             </td>
                             
-                            <!-- Auto Algae -->
+                            <!-- Teleop Stats -->
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm space-y-1">
-                                    <div class="text-gray-500">Net: {{ "%.1f"|format(team.auto_algae_stats.net) }}</div>
-                                    <div class="text-gray-500">Proc: {{ "%.1f"|format(team.auto_algae_stats.processor) }}</div>
-                                </div>
-                            </td>
-                            
-                            <!-- Teleop Coral -->
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm space-y-1">
-                                    <div class="text-gray-500">L1: {{ "%.1f"|format(team.teleop_coral_stats.level1) }}</div>
-                                    <div class="text-gray-500">L2: {{ "%.1f"|format(team.teleop_coral_stats.level2) }}</div>
-                                    <div class="text-gray-500">L3: {{ "%.1f"|format(team.teleop_coral_stats.level3) }}</div>
-                                    <div class="text-gray-500">L4: {{ "%.1f"|format(team.teleop_coral_stats.level4) }}</div>
-                                </div>
-                            </td>
-                            
-                            <!-- Teleop Algae -->
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm space-y-1">
-                                    <div class="text-gray-500">Net: {{ "%.1f"|format(team.teleop_algae_stats.net) }}</div>
-                                    <div class="text-gray-500">Proc: {{ "%.1f"|format(team.teleop_algae_stats.processor) }}</div>
+                                    <div class="text-gray-500">Purple: {{ "%.1f"|format(team.teleop_stats.purple_classified) }} / {{ "%.1f"|format(team.teleop_stats.purple_overflow) }}</div>
+                                    <div class="text-gray-500">Green: {{ "%.1f"|format(team.teleop_stats.green_classified) }} / {{ "%.1f"|format(team.teleop_stats.green_overflow) }}</div>
                                 </div>
                             </td>
                             
@@ -141,22 +113,31 @@
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="space-y-2">
                                     <div class="flex items-center">
-                                        <span class="text-xs text-gray-500 w-16">All:</span>
-                                        <div class="w-16 bg-gray-200 rounded-full h-2 mr-2">
-                                            <div class="bg-green-600 h-2 rounded-full" 
-                                                 data-progress-value="{{ team.climb_success_rate }}">
-                                            </div>
-                                        </div>
-                                        <span class="text-sm text-gray-500">{{ "%.1f%%"|format(team.climb_success_rate) }}</span>
-                                    </div>
-                                    <div class="flex items-center">
-                                        <span class="text-xs text-gray-500 w-16">Deep:</span>
+                                        <span class="text-xs text-gray-500 w-24">Park:</span>
                                         <div class="w-16 bg-gray-200 rounded-full h-2 mr-2">
                                             <div class="bg-blue-600 h-2 rounded-full" 
-                                                 data-progress-value="{{ team.deep_climb_success_rate }}">
+                                                 data-progress-value="{{ team.park_success_rate }}">
                                             </div>
                                         </div>
-                                        <span class="text-sm text-gray-500">{{ "%.1f%%"|format(team.deep_climb_success_rate) }}</span>
+                                        <span class="text-sm text-gray-500">{{ "%.1f%%"|format(team.park_success_rate) }}</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <span class="text-xs text-gray-500 w-24">Complete Park:</span>
+                                        <div class="w-16 bg-gray-200 rounded-full h-2 mr-2">
+                                            <div class="bg-green-600 h-2 rounded-full" 
+                                                 data-progress-value="{{ team.complete_park_success_rate }}">
+                                            </div>
+                                        </div>
+                                        <span class="text-sm text-gray-500">{{ "%.1f%%"|format(team.complete_park_success_rate) }}</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <span class="text-xs text-gray-500 w-24">Stacked Park:</span>
+                                        <div class="w-16 bg-gray-200 rounded-full h-2 mr-2">
+                                            <div class="bg-purple-600 h-2 rounded-full" 
+                                                 data-progress-value="{{ team.stacked_park_success_rate }}">
+                                            </div>
+                                        </div>
+                                        <span class="text-sm text-gray-500">{{ "%.1f%%"|format(team.stacked_park_success_rate) }}</span>
                                     </div>
                                 </div>
                             </td>

@@ -12,7 +12,7 @@ const STATIC_ASSETS = [
   '/static/css/global.css',
   '/static/css/index.css',
   '/static/js/Canvas.js',
-  '/static/images/field-2026.wepb', // credits Team Juice 16236: https://www.reddit.com/r/FTC/comments/1nalob0/decode_custom_field_images_meepmeep_compatible/
+  '/static/images/field-2026.webp', // credits Team Juice 16236: https://www.reddit.com/r/FTC/comments/1nalob0/decode_custom_field_images_meepmeep_compatible/
   '/static/images/default_profile.png',
   '/static/js/notifications.js',
   '/static/logo.png',

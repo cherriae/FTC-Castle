@@ -20,9 +20,10 @@
                     </button>
                 </div>
                 <!-- Canvas Container -->
-                <div id="autoPathContainer" class="bg-white rounded-lg shadow-lg mb-4 mx-auto w-full h-[400px]">
+                <div id="autoPathContainer" class="bg-white rounded-lg shadow-lg mb-4 mx-auto w-full h-[500px]">
                     <canvas id="autoPath" class="w-full h-full rounded border border-gray-200"></canvas>
                 </div>
+                <p class="text-xs text-gray-500 text-center mt-1">Field Image by <a href="https://www.reddit.com/r/FTC/comments/1nalob0/decode_custom_field_images_meepmeep_compatible/" target="_blank" class="text-blue-500 hover:underline">Team Juice 16236</a></p>
                 <p class="text-gray-600 secondary mb-4 text-center">
                     Pan: Shift+Drag or Middle Mouse Button | Zoom: Scroll Wheel
                 </p>
@@ -151,16 +152,19 @@
                                 Match
                             </th>
                             <th class="md:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Auto Coral (1-4)
+                                Auto Classified (P/G)
                             </th>
                             <th class="md:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Auto Algae (Net/Proc)
+                                Auto Overflow (P/G)
                             </th>
                             <th class="md:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Teleop Coral (1-4)
+                                Pattern Completed
                             </th>
                             <th class="md:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Teleop Algae (Net/Proc)
+                                Teleop Classified (P/G)
+                            </th>
+                            <th class="md:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Teleop Overflow (P/G)
                             </th>
                             <th class="md:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Climb
@@ -210,16 +214,19 @@
                             </td>
                             <td class="sm:table-cell px-3 sm:px-6 py-4 whitespace-nowrap">{{ data.match_number }}</td>
                             <td class="md:table-cell px-3 sm:px-6 py-4 whitespace-nowrap">
-                                {{ data.auto_coral_level1 }}/{{ data.auto_coral_level2 }}/{{ data.auto_coral_level3 }}/{{ data.auto_coral_level4 }}
+                                {{ data.auto_purple_classified }}/{{ data.auto_green_classified }}
                             </td>
                             <td class="md:table-cell px-3 sm:px-6 py-4 whitespace-nowrap">
-                                {{ data.auto_algae_net }}/{{ data.auto_algae_processor }}
+                                {{ data.auto_purple_overflow }}/{{ data.auto_green_overflow }}
                             </td>
                             <td class="md:table-cell px-3 sm:px-6 py-4 whitespace-nowrap">
-                                {{ data.teleop_coral_level1 }}/{{ data.teleop_coral_level2 }}/{{ data.teleop_coral_level3 }}/{{ data.teleop_coral_level4 }}
+                                {{ data.pattern_completed }}/7
                             </td>
                             <td class="md:table-cell px-3 sm:px-6 py-4 whitespace-nowrap">
-                                {{ data.teleop_algae_net }}/{{ data.teleop_algae_processor }}
+                                {{ data.teleop_purple_classified }}/{{ data.teleop_green_classified }}
+                            </td>
+                            <td class="md:table-cell px-3 sm:px-6 py-4 whitespace-nowrap">
+                                {{ data.teleop_purple_overflow }}/{{ data.teleop_green_overflow }}
                             </td>
                             <td class="md:table-cell px-3 sm:px-6 py-4 whitespace-nowrap">
                                 {% if data.climb_success %}

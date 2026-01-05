@@ -89,20 +89,16 @@ function updateTeamCards(data) {
         const stats = teamData.stats || {};
 
         // Update Auto Period stats
-        document.getElementById(`team${cardNum}-auto-l1`).textContent = (stats.avg_auto_coral_level1 || 0).toFixed(2);
-        document.getElementById(`team${cardNum}-auto-l2`).textContent = (stats.avg_auto_coral_level2 || 0).toFixed(2);
-        document.getElementById(`team${cardNum}-auto-l3`).textContent = (stats.avg_auto_coral_level3 || 0).toFixed(2);
-        document.getElementById(`team${cardNum}-auto-l4`).textContent = (stats.avg_auto_coral_level4 || 0).toFixed(2);
-        document.getElementById(`team${cardNum}-auto-net`).textContent = (stats.avg_auto_algae_net || 0).toFixed(2);
-        document.getElementById(`team${cardNum}-auto-processor`).textContent = (stats.avg_auto_algae_processor || 0).toFixed(2);
+        document.getElementById(`team${cardNum}-auto-purple-classified`).textContent = (stats.avg_auto_purple_classified || 0).toFixed(2);
+        document.getElementById(`team${cardNum}-auto-green-classified`).textContent = (stats.avg_auto_green_classified || 0).toFixed(2);
+        document.getElementById(`team${cardNum}-auto-purple-overflow`).textContent = (stats.avg_auto_purple_overflow || 0).toFixed(2);
+        document.getElementById(`team${cardNum}-auto-green-overflow`).textContent = (stats.avg_auto_green_overflow || 0).toFixed(2);
 
         // Update Teleop Period stats
-        document.getElementById(`team${cardNum}-teleop-l1`).textContent = (stats.avg_teleop_coral_level1 || 0).toFixed(2);
-        document.getElementById(`team${cardNum}-teleop-l2`).textContent = (stats.avg_teleop_coral_level2 || 0).toFixed(2);
-        document.getElementById(`team${cardNum}-teleop-l3`).textContent = (stats.avg_teleop_coral_level3 || 0).toFixed(2);
-        document.getElementById(`team${cardNum}-teleop-l4`).textContent = (stats.avg_teleop_coral_level4 || 0).toFixed(2);
-        document.getElementById(`team${cardNum}-teleop-net`).textContent = (stats.avg_teleop_algae_net || 0).toFixed(2);
-        document.getElementById(`team${cardNum}-teleop-processor`).textContent = (stats.avg_teleop_algae_processor || 0).toFixed(2);
+        document.getElementById(`team${cardNum}-teleop-purple-classified`).textContent = (stats.avg_teleop_purple_classified || 0).toFixed(2);
+        document.getElementById(`team${cardNum}-teleop-green-classified`).textContent = (stats.avg_teleop_green_classified || 0).toFixed(2);
+        document.getElementById(`team${cardNum}-teleop-purple-overflow`).textContent = (stats.avg_teleop_purple_overflow || 0).toFixed(2);
+        document.getElementById(`team${cardNum}-teleop-green-overflow`).textContent = (stats.avg_teleop_green_overflow || 0).toFixed(2);
 
         // Update Endgame stats
         document.getElementById(`team${cardNum}-climb-success`).textContent = ((stats.climb_success_rate || 0) * 100).toFixed(1);
@@ -154,16 +150,16 @@ function updateRawDataTable(data) {
                     ${match.match_number || '-'}
                 </td>
                 <td class="md:table-cell px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    ${match.auto_coral_level1 || 0}/${match.auto_coral_level2 || 0}/${match.auto_coral_level3 || 0}/${match.auto_coral_level4 || 0}
+                    ${match.auto_purple_classified || 0}/${match.auto_green_classified || 0}
                 </td>
                 <td class="md:table-cell px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    ${match.auto_algae_net || 0}/${match.auto_algae_processor || 0}
+                    ${match.auto_purple_overflow || 0}/${match.auto_green_overflow || 0}
                 </td>
                 <td class="md:table-cell px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    ${match.teleop_coral_level1 || 0}/${match.teleop_coral_level2 || 0}/${match.teleop_coral_level3 || 0}/${match.teleop_coral_level4 || 0}
+                    ${match.teleop_purple_classified || 0}/${match.teleop_green_classified || 0}
                 </td>
                 <td class="md:table-cell px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    ${match.teleop_algae_net || 0}/${match.teleop_algae_processor || 0}
+                    ${match.teleop_purple_overflow || 0}/${match.teleop_green_overflow || 0}
                 </td>
                 <td class="md:table-cell px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     ${match.climb_success ? `${match.climb_type || 'Yes'}` : 'No'}
@@ -206,7 +202,7 @@ function showAutoPath(pathData, autoNotes, deviceType) {
     const CanvasField = new Canvas({
         canvas: document.getElementById('modalAutoPathCanvas'),
         container: container,
-        backgroundImage: '/static/images/field-2026.wepb', // credits Team Juice 16236: https://www.reddit.com/r/FTC/comments/1nalob0/decode_custom_field_images_meepmeep_compatible/
+        backgroundImage: '/static/images/field-2026.webp', // credits Team Juice 16236: https://www.reddit.com/r/FTC/comments/1nalob0/decode_custom_field_images_meepmeep_compatible/
         maxPanDistance: 1000
     });
 
