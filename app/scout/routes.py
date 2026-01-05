@@ -1039,8 +1039,9 @@ def get_team_status():
                     try:
                         # Handle ISO format
                         match_time = datetime.fromisoformat(time_str.replace('Z', '+00:00')).timestamp()
-                    except:
-                        pass
+                    except (ValueError, TypeError):
+                        # Invalid datetime format, skip this match's time
+                        match_time = None
                 elif m.get('time'): 
                     match_time = m.get('time')
 
