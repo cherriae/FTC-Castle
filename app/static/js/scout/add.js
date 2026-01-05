@@ -407,21 +407,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert('Please fill in all required fields');
                 return;
             }
-
-            // try {
-            //     const response = await fetch(`/scouting/check_team?team=${teamNumber}&event=${eventCode}&match=${matchNumber}`);
-            //     const data = await response.json();
-                
-            //     if (data.exists) {
-            //         alert(`Team ${teamNumber} already exists in match ${matchNumber} for event ${eventCode}`);
-            //         return;
-            //     }
-                
-            //     form.submit();
-            // } catch (error) {
-            //     console.error('Error checking team:', error);
-            //     form.submit();
-            // }
             form.submit();
         });
     }
@@ -668,7 +653,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             if (level === 'qm') {
                                 option.textContent = `Qual ${match.match_number}`;
                             } else if (level === 'de') {
-                                option.textContent = `Match ${match.match_number}`;
+                                option.textContent = `Playoffs ${match.match_number}`;
                             } else if (level === 'sf') {
                                 option.textContent = `Semi-Finals ${match.set_number}`;
                             } else if (level === 'f') {

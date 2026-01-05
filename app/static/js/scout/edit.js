@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', function() {
         initialColor: '#2563eb',
         initialThickness: 3,
         maxPanDistance: 1000,
-        backgroundImage: '/static/images/field-2026.wepb', // credits Team Juice 16236: https://www.reddit.com/r/FTC/comments/1nalob0/decode_custom_field_images_meepmeep_compatible/
+        backgroundImage: '/static/images/field-2026.webp', // credits Team Juice 16236: https://www.reddit.com/r/FTC/comments/1nalob0/decode_custom_field_images_meepmeep_compatible/
         readonly: false
     });
 
@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('Failed to load background image');
         CanvasField.showStatus('Error loading field image');
     };
-    testImage.src = '/static/images/field-2026.wepb'; // credits Team Juice 16236: https://www.reddit.com/r/FTC/comments/1nalob0/decode_custom_field_images_meepmeep_compatible/
+    testImage.src = '/static/images/field-2026.webp'; // credits Team Juice 16236: https://www.reddit.com/r/FTC/comments/1nalob0/decode_custom_field_images_meepmeep_compatible/
 
     // Load existing path data if available
     const pathDataInput = document.getElementById('autoPathData');

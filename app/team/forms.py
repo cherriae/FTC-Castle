@@ -17,7 +17,7 @@ class CreateTeamForm(FlaskForm):
         validators=[
             DataRequired(message="Team number is required"),
             NumberRange(
-                min=1, max=19999, message="Team number must be between 1 and 19999"
+                min=1, max=49999, message="Team number must be between 1 and 49999"
             ),
         ],
     )

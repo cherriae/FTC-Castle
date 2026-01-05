@@ -67,7 +67,7 @@
                         </label>
                         <label class="relative flex items-center group">
                             <input type="radio" name="alliance" value="blue" {{ 'checked' if team_data.alliance == 'blue' }}
-                                   class="peer sr-only">
+                                   class="peer sr-only" disabled>
                             <div class="px-5 py-2.5 rounded-lg border-2 border-gray-200 bg-white text-sm font-medium text-blue-600
                                         cursor-pointer transition-all duration-200
                                         group-hover:bg-gray-50 peer-checked:border-blue-500 peer-checked:text-blue-600
@@ -90,6 +90,7 @@
                     <div id="autoPathContainer" class="bg-white rounded-lg shadow-lg mb-4 mx-auto w-full h-[500px]">
                         <canvas id="autoPath" class="w-full h-full rounded border border-gray-200"></canvas>
                     </div>
+                    <p class="text-xs text-gray-500 text-center mt-1">Field Image by <a href="https://www.reddit.com/r/FTC/comments/1nalob0/decode_custom_field_images_meepmeep_compatible/" target="_blank" class="text-blue-500 hover:underline">Team Juice 16236</a></p>
                     
                     <!-- Controls -->
                     <div class="controls space-y-4 flex flex-col items-center text-center p-4">

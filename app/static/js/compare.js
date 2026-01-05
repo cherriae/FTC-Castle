@@ -202,7 +202,7 @@ function showAutoPath(pathData, autoNotes, deviceType) {
     const CanvasField = new Canvas({
         canvas: document.getElementById('modalAutoPathCanvas'),
         container: container,
-        backgroundImage: '/static/images/field-2026.wepb', // credits Team Juice 16236: https://www.reddit.com/r/FTC/comments/1nalob0/decode_custom_field_images_meepmeep_compatible/
+        backgroundImage: '/static/images/field-2026.webp', // credits Team Juice 16236: https://www.reddit.com/r/FTC/comments/1nalob0/decode_custom_field_images_meepmeep_compatible/
         maxPanDistance: 1000
     });
 

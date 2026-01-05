@@ -521,6 +521,36 @@ def leaderboard():
                             0
                         ]
                     }
+                },
+                "complete_park_attempts": {
+                    "$sum": {"$cond": [{"$eq": ["$climb_type", "complete park"]}, 1, 0]}
+                },
+                "complete_park_successes": {
+                    "$sum": {
+                        "$cond": [
+                            {"$and": [
+                                {"$eq": ["$climb_type", "complete park"]},
+                                {"$eq": ["$climb_success", True]}
+                            ]},
+                            1,
+                            0
+                        ]
+                    }
+                },
+                "stacked_park_attempts": {
+                    "$sum": {"$cond": [{"$eq": ["$climb_type", "stacked park"]}, 1, 0]}
+                },
+                "stacked_park_successes": {
+                    "$sum": {
+                        "$cond": [
+                            {"$and": [
+                                {"$eq": ["$climb_type", "stacked park"]},
+                                {"$eq": ["$climb_success", True]}
+                            ]},
+                            1,
+                            0
+                        ]
+                    }
                 }
             }},
             {"$match": {"matches_played": {"$gte": MIN_MATCHES}}},
@@ -580,6 +610,26 @@ def leaderboard():
                         100
                     ]
                 },
+                "complete_park_success_rate": {
+                    "$multiply": [
+                        {"$cond": [
+                            {"$gt": ["$complete_park_attempts", 0]},
+                            {"$divide": ["$complete_park_successes", "$complete_park_attempts"]},
+                            0
+                        ]},
+                        100
+                    ]
+                },
+                "stacked_park_success_rate": {
+                    "$multiply": [
+                        {"$cond": [
+                            {"$gt": ["$stacked_park_attempts", 0]},
+                            {"$divide": ["$stacked_park_successes", "$stacked_park_attempts"]},
+                            0
+                        ]},
+                        100
+                    ]
+                },
                 "robot_disabled_list": "$robot_disabled_list"
             }}
         ])
@@ -590,7 +640,9 @@ def leaderboard():
             'auto': 'total_auto',
             'teleop': 'total_teleop',
             'climb': 'climb_success_rate',
-            'park': 'park_success_rate'
+            'park': 'park_success_rate',
+            'complete_park': 'complete_park_success_rate',
+            'stacked_park': 'stacked_park_success_rate'
         }.get(sort_type, 'total_score')
 
         pipeline.append({"$sort": {sort_field: -1}})
@@ -927,7 +979,7 @@ def get_team_status():
                 match_num = final_counter
                 final_counter += 1
             elif level == 'DoubleElim':
-                prefix = 'Match'
+                prefix = 'Playoffs'
                 match_num = m.get('series', 0)
             else:
                 prefix = 'Qual'
