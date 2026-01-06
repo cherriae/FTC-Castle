@@ -25,7 +25,7 @@
           </svg>
         </a>
       </div>
-      <p class="mt-2 text-sm text-gray-500">Upcoming match time data is only a prediction from the Blue Alliance API</p>
+      <p class="mt-2 text-sm text-gray-500">Upcoming match time data is only a prediction from the FTCScout API</p>
     </div>
 
     <!-- Team Input Form -->
@@ -158,10 +158,10 @@ document.addEventListener('DOMContentLoaded', function() {
     eventInfoBanner.classList.add('hidden');
     
     try {
-      const response = await fetch(`/api/tba/team-status?team=${teamNumber}`);
+      const response = await fetch(`/api/ftc/team-status?team=${teamNumber}`);
       const data = await response.json();
       
-      if (response.ok && data.status && data.matches) {
+      if (response.ok && data.matches) {
         displayTeamStatus(data, teamNumber);
         
         // Display event info
@@ -218,37 +218,41 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Display ranking information
+    let rankingHtml = '';
+    
     if (status && status.qual) {
       const ranking = status.qual.ranking;
-      
-      // Add ranking info
-      rankingDetails.innerHTML = `
+      rankingHtml += `
         <div class="bg-gray-50 p-3 rounded-lg">
           <div class="text-sm text-gray-500">Rank</div>
           <div class="text-xl font-bold">${escapeHtml(String(ranking.rank))}</div>
-        </div>
+        </div>`;
+    } else {
+       rankingHtml += `
+        <div class="bg-gray-50 p-3 rounded-lg">
+          <div class="text-sm text-gray-500">Rank</div>
+          <div class="text-xl font-bold text-gray-400">N/A</div>
+        </div>`;
+    }
+
+    // Always show record and link
+    rankingHtml += `
         <div class="bg-gray-50 p-3 rounded-lg">
           <div class="text-sm text-gray-500">Record (All Matches)</div>
           <div class="text-xl font-bold">${escapeHtml(String(wins))}-${escapeHtml(String(losses))}-${escapeHtml(String(ties))}</div>
         </div>
         <div class="bg-gray-50 p-3 rounded-lg">
-          <div class="text-sm text-gray-500">The Blue Alliance Page</div>
+          <div class="text-sm text-gray-500">FTCScout Page</div>
           <div class="text-xl font-bold">
-            <a href="https://thebluealliance.com/team/${escapeHtml(String(teamNumber))}" target="_blank" class="text-blue-500 hover:underline">
+            <a href="https://ftcscout.org/teams/${escapeHtml(String(teamNumber))}" target="_blank" class="text-blue-500 hover:underline">
               View
             </a>
           </div>
         </div>
-      `;
-      
-      teamRanking.classList.remove('hidden');
-    } else {
-      rankingDetails.innerHTML = `
-        <div class="col-span-3 bg-gray-50 p-3 rounded-lg">
-          <div class="text-sm text-gray-500 text-center">No ranking information available yet</div>
-        </div>
-      `;
-    }
+    `;
+    
+    rankingDetails.innerHTML = rankingHtml;
+    teamRanking.classList.remove('hidden');
     
     // Display previous matches
     if (matches.previous && matches.previous.length > 0) {

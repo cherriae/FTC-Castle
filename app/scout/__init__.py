@@ -1,5 +1,5 @@
 from .routes import *
 from .scouting_utils import *
-from .TBA import TBAInterface
+from .FTCScout import FTCScout
 
-__all__ = ['TBAInterface']
+__all__ = ['FTCScout']

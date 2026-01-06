@@ -33,8 +33,8 @@ class Canvas {
       this.externalUpdateUIControls = options.updateUIControls || null;
       
       // Field dimensions (fixed size we want to display)
-      this.FIELD_WIDTH = 800;
-      this.FIELD_HEIGHT = 400;
+      this.FIELD_WIDTH = options.fieldWidth || 1440;
+      this.FIELD_HEIGHT = options.fieldHeight || 1440;
       
       // Background image
       this.backgroundImage = new Image();

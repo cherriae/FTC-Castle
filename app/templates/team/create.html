@@ -24,7 +24,7 @@
                         oninput="this.value = this.value.replace(/[^0-9]/g, '')",
                         pattern="[0-9]*",
                         min="1",
-                        max="19999"
+                        max="49999"
                     ) }}
                     {% if form.team_number.errors %}
                         {% for error in form.team_number.errors %}
@@ -108,7 +108,7 @@ document.querySelector('textarea[name="description"]').addEventListener('input',
 document.querySelector('input[name="team_number"]').addEventListener('input', function() {
     const value = parseInt(this.value, 10);
     if (value >= 20000) {
-        this.value = '19999';
+        this.value = '49999';
     }
 });
 </script>

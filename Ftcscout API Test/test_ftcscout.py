@@ -5,6 +5,8 @@ import json
 import sys
 from pathlib import Path
 
+import requests
+
 # Add parent directory (FTC-Castle root) to path so we can import app
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -14,6 +16,7 @@ TeamOutputFile = "./Ftcscout API Test/test_output_team.json"
 EventOutputFile = "./Ftcscout API Test/test_output_events.json"
 MatchOutputFile = "./Ftcscout API Test/test_output_matches.json"
 QuickStatsOutputFile = "./Ftcscout API Test/test_output_quick_stats.json"
+TeamEventOutputFile = "./Ftcscout API Test/test_output_team_events.json"
 
 
 def test_get_team():
@@ -141,6 +144,39 @@ def test_get_quick_stats():
     return result is not None
 
 
+def test_get_team_events():
+    """Test getting all events for a team"""
+
+    print("\nTesting get_team_events()...")
+    team = 24306
+    season = 2025
+    url = f"https://api.ftcscout.org/rest/v1/teams/{team}/events/{season}"
+    print(f"Testing {url}")
+    
+    try:
+        print(f"  Querying events for team {team} in season {season}")
+        resp = requests.get(url)
+        print(f"Status: {resp.status_code}")
+        if resp.status_code == 200:
+            data = resp.json()
+            with open(TeamEventOutputFile, 'w') as f:
+                json.dump(data, f, indent=2)
+                return True
+            
+            print(f"✓ Successfully fetched events for team {team} in season {season}")
+            print(f"Saved to {TeamEventOutputFile}")
+        else:
+            with open(TeamEventOutputFile, 'w') as f:
+                f.write(resp.text)
+
+            print(f"✗ Failed to fetch events for team {team} in season {season}")
+            return False
+
+    except Exception as e:
+        print(f"Error: {e}")
+
+
+
 def test_api_connection():
     """Test basic API connection"""
     print("Testing API connection...")
@@ -166,6 +202,7 @@ def run_all_tests():
         test_get_all_events,
         test_get_all_matches,
         test_get_quick_stats,
+        test_get_team_events,
     ]
     
     results = []

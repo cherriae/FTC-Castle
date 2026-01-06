@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 from datetime import datetime, timezone
 
-import aiohttp
 from bson import ObjectId, json_util
 from flask import (Blueprint, current_app, flash, jsonify, redirect,
                    render_template, request, url_for)
@@ -13,13 +12,13 @@ from flask_login import current_user, login_required
 
 import logging
 from app.scout.scouting_utils import ScoutingManager
-from app.utils import async_route, handle_route_errors
+from app.utils import handle_route_errors
 
-from .TBA import TBAInterface
+from .FTCScout import FTCScout
 
 scouting_bp = Blueprint("scouting", __name__)
 scouting_manager = None
-tba = None
+ftc = None
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -27,14 +26,15 @@ logger = logging.getLogger(__name__)
 
 @scouting_bp.record
 def on_blueprint_init(state):
-    global scouting_manager, tba
+    global scouting_manager, ftc
     app = state.app
     
     # Create ScoutingManager with the singleton connection
     scouting_manager = ScoutingManager(app.config["MONGO_URI"])
     
-    # Initialize TBA
-    tba = TBAInterface(api_key=app.config.get("TBA_KEY", ""))
+    # Initialize FTCScout
+    global ftc
+    ftc = FTCScout()
     
     # Store in app context for proper cleanup
     if not hasattr(app, 'db_managers'):
@@ -49,9 +49,20 @@ def on_blueprint_init(state):
 def add():
     if request.method != "POST":
         # Get current events only
-        tba = TBAInterface()
-        year = datetime.now().year
-        events = tba.get_current_events(year) or {}
+        current_date = datetime.now()
+        season = current_date.year
+        if current_date.month < 9:
+            season -= 1
+            
+        events_list = ftc.get_all_events(season) or []
+        events = {}
+        for e in events_list:
+            # Map FTCScout event to expected format
+            # FTCScout: code, name, start
+            events[e['name']] = {
+                'key': e['code'],
+                'start_date': e['start']
+            }
         
         return render_template("scouting/add.html", 
                             events=events,
@@ -124,7 +135,7 @@ def edit(id):
         scouter_team = team_data.scouter_team
         
         # Allow access only if user is the original scouter or on the same team
-        if current_user.get_id() != team_data.scouter_id and (not current_team or not scouter_team or str(current_team) != str(scouter_team)):
+        if current_user.get_id() != str(team_data.scouter_id) and (not current_team or not scouter_team or str(current_team) != str(scouter_team)):
             flash("Access denied: You can only edit scouting data from your own team", "error")
             return redirect(url_for("scouting.home"))
 
@@ -255,18 +266,14 @@ def compare_teams():
                     {"$group": {
                         "_id": "$team_number",
                         "matches_played": {"$sum": 1},
-                        "avg_auto_coral_level1": {"$avg": {"$cond": [{"$gt": ["$auto_coral_level1", 0]}, "$auto_coral_level1", None]}},
-                        "avg_auto_coral_level2": {"$avg": {"$cond": [{"$gt": ["$auto_coral_level2", 0]}, "$auto_coral_level2", None]}},
-                        "avg_auto_coral_level3": {"$avg": {"$cond": [{"$gt": ["$auto_coral_level3", 0]}, "$auto_coral_level3", None]}},
-                        "avg_auto_coral_level4": {"$avg": {"$cond": [{"$gt": ["$auto_coral_level4", 0]}, "$auto_coral_level4", None]}},
-                        "avg_auto_algae_net": {"$avg": {"$cond": [{"$gt": ["$auto_algae_net", 0]}, "$auto_algae_net", None]}},
-                        "avg_auto_algae_processor": {"$avg": {"$cond": [{"$gt": ["$auto_algae_processor", 0]}, "$auto_algae_processor", None]}},
-                        "avg_teleop_coral_level1": {"$avg": {"$cond": [{"$gt": ["$teleop_coral_level1", 0]}, "$teleop_coral_level1", None]}},
-                        "avg_teleop_coral_level2": {"$avg": {"$cond": [{"$gt": ["$teleop_coral_level2", 0]}, "$teleop_coral_level2", None]}},
-                        "avg_teleop_coral_level3": {"$avg": {"$cond": [{"$gt": ["$teleop_coral_level3", 0]}, "$teleop_coral_level3", None]}},
-                        "avg_teleop_coral_level4": {"$avg": {"$cond": [{"$gt": ["$teleop_coral_level4", 0]}, "$teleop_coral_level4", None]}},
-                        "avg_teleop_algae_net": {"$avg": {"$cond": [{"$gt": ["$teleop_algae_net", 0]}, "$teleop_algae_net", None]}},
-                        "avg_teleop_algae_processor": {"$avg": {"$cond": [{"$gt": ["$teleop_algae_processor", 0]}, "$teleop_algae_processor", None]}},
+                        "avg_auto_purple_classified": {"$avg": {"$cond": [{"$gt": ["$auto_purple_classified", 0]}, "$auto_purple_classified", None]}},
+                        "avg_auto_green_classified": {"$avg": {"$cond": [{"$gt": ["$auto_green_classified", 0]}, "$auto_green_classified", None]}},
+                        "avg_auto_purple_overflow": {"$avg": {"$cond": [{"$gt": ["$auto_purple_overflow", 0]}, "$auto_purple_overflow", None]}},
+                        "avg_auto_green_overflow": {"$avg": {"$cond": [{"$gt": ["$auto_green_overflow", 0]}, "$auto_green_overflow", None]}},
+                        "avg_teleop_purple_classified": {"$avg": {"$cond": [{"$gt": ["$teleop_purple_classified", 0]}, "$teleop_purple_classified", None]}},
+                        "avg_teleop_green_classified": {"$avg": {"$cond": [{"$gt": ["$teleop_green_classified", 0]}, "$teleop_green_classified", None]}},
+                        "avg_teleop_purple_overflow": {"$avg": {"$cond": [{"$gt": ["$teleop_purple_overflow", 0]}, "$teleop_purple_overflow", None]}},
+                        "avg_teleop_green_overflow": {"$avg": {"$cond": [{"$gt": ["$teleop_green_overflow", 0]}, "$teleop_green_overflow", None]}},
                         # Only count successful climbs in the rate
                         "climb_success_rate": {"$avg": {"$cond": ["$climb_success", 1, 0]}},
                         "auto_paths": {"$push": {
@@ -286,33 +293,28 @@ def compare_teams():
                 ):
                     normalized_stats = {
                         "auto_scoring": (
-                            (stats[0]["avg_auto_coral_level1"] or 0) + 
-                            (stats[0]["avg_auto_coral_level2"] or 0) * 2 +
-                            (stats[0]["avg_auto_coral_level3"] or 0) * 3 +
-                            (stats[0]["avg_auto_coral_level4"] or 0) * 4 +
-                            (stats[0]["avg_auto_algae_net"] or 0) * 2 +
-                            (stats[0]["avg_auto_algae_processor"] or 0) * 3
+                            (stats[0]["avg_auto_purple_classified"] or 0) + 
+                            (stats[0]["avg_auto_green_classified"] or 0) +
+                            (stats[0]["avg_auto_purple_overflow"] or 0) +
+                            (stats[0]["avg_auto_green_overflow"] or 0)
                         ) / 20,
                         "teleop_scoring": (
-                            (stats[0]["avg_teleop_coral_level1"] or 0) + 
-                            (stats[0]["avg_teleop_coral_level2"] or 0) * 2 +
-                            (stats[0]["avg_teleop_coral_level3"] or 0) * 3 +
-                            (stats[0]["avg_teleop_coral_level4"] or 0) * 4 +
-                            (stats[0]["avg_teleop_algae_net"] or 0) * 2 +
-                            (stats[0]["avg_teleop_algae_processor"] or 0) * 3
+                            (stats[0]["avg_teleop_purple_classified"] or 0) + 
+                            (stats[0]["avg_teleop_green_classified"] or 0) +
+                            (stats[0]["avg_teleop_purple_overflow"] or 0) +
+                            (stats[0]["avg_teleop_green_overflow"] or 0)
                         ) / 20,
                         "climb_rating": stats[0]["climb_success_rate"],
                     }
 
-                    # Get team info from TBA
-                    team_key = f"frc{team_num}"
-                    team_info = TBAInterface().get_team(team_key)
+                    # Get team info from FTCScout
+                    team_info = ftc.get_team(team_num) or {}
 
                     teams_data[str(team_num)] = {
                         "team_number": team_num,
-                        "nickname": team_info.get("nickname", "Unknown"),
+                        "nickname": team_info.get("name", "Unknown"),
                         "city": team_info.get("city"),
-                        "state_prov": team_info.get("state_prov"),
+                        "state_prov": team_info.get("state"),
                         "country": team_info.get("country"),
                         "stats": stats[0],
                         "normalized_stats": normalized_stats,
@@ -335,40 +337,22 @@ def compare_teams():
 @scouting_bp.route("/api/search")
 @login_required
 # @limiter.limit("30 per minute")
-@async_route
-async def search_teams():
+def search_teams():
     query = request.args.get("q", "").strip()
     if not query:
         return jsonify([])
 
     try:
-        # Initialize TBA interface
-        tba = TBAInterface()
-        
         # Handle both numeric and text searches
+        team = None
         if query.isdigit():
-            team_key = f"frc{query}"
-            url = f"{tba.base_url}/team/{team_key}"
-            
-            async with aiohttp.ClientSession(headers=tba.headers) as session:
-                async with session.get(url) as response:
-                    if response.status != 200:
-                        return jsonify([])
-                    team = await response.json()
-        else:
-            # Search by team name/nickname
-            url = f"{tba.base_url}/teams/search/{query}"
-            async with aiohttp.ClientSession(headers=tba.headers) as session:
-                async with session.get(url) as response:
-                    if response.status != 200:
-                        return jsonify([])
-                    teams = await response.json()
-                    if not teams:
-                        return jsonify([])
-                    team = teams[0]  # Take the first match
+            team = ftc.get_team(int(query))
+        
+        if not team:
+            return jsonify([])
 
         # Get team number from the response
-        team_number = team.get("team_number")
+        team_number = team.get("number")
         
         # Fetch scouting data from our database
         pipeline = [
@@ -393,18 +377,15 @@ async def search_teams():
                     "_id": {"$toString": "$_id"},  # Convert ObjectId to string
                     "event_code": 1,
                     "match_number": 1,
-                    "auto_coral_level1": {"$ifNull": ["$auto_coral_level1", 0]},
-                    "auto_coral_level2": {"$ifNull": ["$auto_coral_level2", 0]},
-                    "auto_coral_level3": {"$ifNull": ["$auto_coral_level3", 0]},
-                    "auto_coral_level4": {"$ifNull": ["$auto_coral_level4", 0]},
-                    "teleop_coral_level1": {"$ifNull": ["$teleop_coral_level1", 0]},
-                    "teleop_coral_level2": {"$ifNull": ["$teleop_coral_level2", 0]},
-                    "teleop_coral_level3": {"$ifNull": ["$teleop_coral_level3", 0]},
-                    "teleop_coral_level4": {"$ifNull": ["$teleop_coral_level4", 0]},
-                    "auto_algae_net": {"$ifNull": ["$auto_algae_net", 0]},
-                    "auto_algae_processor": {"$ifNull": ["$auto_algae_processor", 0]},
-                    "teleop_algae_net": {"$ifNull": ["$teleop_algae_net", 0]},
-                    "teleop_algae_processor": {"$ifNull": ["$teleop_algae_processor", 0]},
+                    "auto_purple_classified": {"$ifNull": ["$auto_purple_classified", 0]},
+                    "auto_green_classified": {"$ifNull": ["$auto_green_classified", 0]},
+                    "auto_purple_overflow": {"$ifNull": ["$auto_purple_overflow", 0]},
+                    "auto_green_overflow": {"$ifNull": ["$auto_green_overflow", 0]},
+                    "teleop_purple_classified": {"$ifNull": ["$teleop_purple_classified", 0]},
+                    "teleop_green_classified": {"$ifNull": ["$teleop_green_classified", 0]},
+                    "teleop_purple_overflow": {"$ifNull": ["$teleop_purple_overflow", 0]},
+                    "teleop_green_overflow": {"$ifNull": ["$teleop_green_overflow", 0]},
+                    "pattern_completed": 1,
                     "climb_type": 1,
                     "climb_success": 1,
                     "auto_path": 1,
@@ -421,10 +402,10 @@ async def search_teams():
         # Format response
         response_data = [{
             "team_number": team_number,
-            "nickname": team.get("nickname"),
-            "school_name": team.get("school_name"),
+            "nickname": team.get("name"),
+            "school_name": team.get("schoolName"),
             "city": team.get("city"),
-            "state_prov": team.get("state_prov"),
+            "state_prov": team.get("state"),
             "country": team.get("country"),
             "scouting_data": scouting_data,
             "has_team_page": bool(scouting_data)  # True if we have any scouting data
@@ -443,7 +424,7 @@ async def search_teams():
 def leaderboard():
     try:
         MIN_MATCHES = 1
-        sort_type = request.args.get('sort', 'coral')
+        sort_type = request.args.get('sort', 'total')
         selected_event = request.args.get('event', 'all')
         
         # Get available events from scouting data
@@ -507,22 +488,16 @@ def leaderboard():
             {"$group": {
                 "_id": "$team_number",
                 "matches_played": {"$sum": 1},
-                # Auto Coral
-                "auto_coral_level1": {"$avg": {"$ifNull": ["$auto_coral_level1", 0]}},
-                "auto_coral_level2": {"$avg": {"$ifNull": ["$auto_coral_level2", 0]}},
-                "auto_coral_level3": {"$avg": {"$ifNull": ["$auto_coral_level3", 0]}},
-                "auto_coral_level4": {"$avg": {"$ifNull": ["$auto_coral_level4", 0]}},
-                # Teleop Coral
-                "teleop_coral_level1": {"$avg": {"$ifNull": ["$teleop_coral_level1", 0]}},
-                "teleop_coral_level2": {"$avg": {"$ifNull": ["$teleop_coral_level2", 0]}},
-                "teleop_coral_level3": {"$avg": {"$ifNull": ["$teleop_coral_level3", 0]}},
-                "teleop_coral_level4": {"$avg": {"$ifNull": ["$teleop_coral_level4", 0]}},
-                # Auto Algae
-                "auto_algae_net": {"$avg": {"$ifNull": ["$auto_algae_net", 0]}},
-                "auto_algae_processor": {"$avg": {"$ifNull": ["$auto_algae_processor", 0]}},
-                # Teleop Algae
-                "teleop_algae_net": {"$avg": {"$ifNull": ["$teleop_algae_net", 0]}},
-                "teleop_algae_processor": {"$avg": {"$ifNull": ["$teleop_algae_processor", 0]}},
+
+                "auto_purple_classified": {"$avg": {"$ifNull": ["$auto_purple_classified", 0]}},
+                "auto_green_classified": {"$avg": {"$ifNull": ["$auto_green_classified", 0]}},
+                "auto_purple_overflow": {"$avg": {"$ifNull": ["$auto_purple_overflow", 0]}},
+                "auto_green_overflow": {"$avg": {"$ifNull": ["$auto_green_overflow", 0]}},
+                # Teleop
+                "teleop_purple_classified": {"$avg": {"$ifNull": ["$teleop_purple_classified", 0]}},
+                "teleop_green_classified": {"$avg": {"$ifNull": ["$teleop_green_classified", 0]}},
+                "teleop_purple_overflow": {"$avg": {"$ifNull": ["$teleop_purple_overflow", 0]}},
+                "teleop_green_overflow": {"$avg": {"$ifNull": ["$teleop_green_overflow", 0]}},
                 
                 # Robot Disabled
                 "robot_disabled_list": {"$push": "$robot_disabled"},
@@ -532,14 +507,44 @@ def leaderboard():
                 "climb_successes": {
                     "$sum": {"$cond": [{"$eq": ["$climb_success", True]}, 1, 0]}
                 },
-                "deep_climb_attempts": {
-                    "$sum": {"$cond": [{"$eq": ["$climb_type", "deep"]}, 1, 0]}
+                "park_attempts": {
+                    "$sum": {"$cond": [{"$eq": ["$climb_type", "park"]}, 1, 0]}
                 },
-                "deep_climb_successes": {
+                "park_successes": {
                     "$sum": {
                         "$cond": [
                             {"$and": [
-                                {"$eq": ["$climb_type", "deep"]},
+                                {"$eq": ["$climb_type", "park"]},
+                                {"$eq": ["$climb_success", True]}
+                            ]},
+                            1,
+                            0
+                        ]
+                    }
+                },
+                "complete_park_attempts": {
+                    "$sum": {"$cond": [{"$eq": ["$climb_type", "complete park"]}, 1, 0]}
+                },
+                "complete_park_successes": {
+                    "$sum": {
+                        "$cond": [
+                            {"$and": [
+                                {"$eq": ["$climb_type", "complete park"]},
+                                {"$eq": ["$climb_success", True]}
+                            ]},
+                            1,
+                            0
+                        ]
+                    }
+                },
+                "stacked_park_attempts": {
+                    "$sum": {"$cond": [{"$eq": ["$climb_type", "stacked park"]}, 1, 0]}
+                },
+                "stacked_park_successes": {
+                    "$sum": {
+                        "$cond": [
+                            {"$and": [
+                                {"$eq": ["$climb_type", "stacked park"]},
                                 {"$eq": ["$climb_success", True]}
                             ]},
                             1,
@@ -552,58 +557,38 @@ def leaderboard():
             {"$project": {
                 "team_number": "$_id",
                 "matches_played": 1,
-                "auto_coral_stats": {
-                    "level1": "$auto_coral_level1",
-                    "level2": "$auto_coral_level2",
-                    "level3": "$auto_coral_level3",
-                    "level4": "$auto_coral_level4"
+                "auto_stats": {
+                    "purple_classified": "$auto_purple_classified",
+                    "green_classified": "$auto_green_classified",
+                    "purple_overflow": "$auto_purple_overflow",
+                    "green_overflow": "$auto_green_overflow"
                 },
-                "teleop_coral_stats": {
-                    "level1": "$teleop_coral_level1",
-                    "level2": "$teleop_coral_level2",
-                    "level3": "$teleop_coral_level3",
-                    "level4": "$teleop_coral_level4"
-                },
-                "auto_algae_stats": {
-                    "net": "$auto_algae_net",
-                    "processor": "$auto_algae_processor"
-                },
-                "teleop_algae_stats": {
-                    "net": "$teleop_algae_net",
-                    "processor": "$teleop_algae_processor"
+                "teleop_stats": {
+                    "purple_classified": "$teleop_purple_classified",
+                    "green_classified": "$teleop_green_classified",
+                    "purple_overflow": "$teleop_purple_overflow",
+                    "green_overflow": "$teleop_green_overflow"
                 },
                 # Calculate totals for each category
-                "total_coral": {
+                "total_score": {
                     "$add": [
-                        "$auto_coral_level1", "$auto_coral_level2", 
-                        "$auto_coral_level3", "$auto_coral_level4",
-                        "$teleop_coral_level1", "$teleop_coral_level2", 
-                        "$teleop_coral_level3", "$teleop_coral_level4"
+                        "$auto_purple_classified", "$auto_green_classified", 
+                        "$auto_purple_overflow", "$auto_green_overflow",
+                        "$teleop_purple_classified", "$teleop_green_classified", 
+                        "$teleop_purple_overflow", "$teleop_green_overflow"
                     ]
                 },
-                "total_auto_coral": {
+                "total_auto": {
                     "$add": [
-                        "$auto_coral_level1", "$auto_coral_level2", 
-                        "$auto_coral_level3", "$auto_coral_level4"
+                        "$auto_purple_classified", "$auto_green_classified", 
+                        "$auto_purple_overflow", "$auto_green_overflow"
                     ]
                 },
-                "total_teleop_coral": {
+                "total_teleop": {
                     "$add": [
-                        "$teleop_coral_level1", "$teleop_coral_level2", 
-                        "$teleop_coral_level3", "$teleop_coral_level4"
+                        "$teleop_purple_classified", "$teleop_green_classified", 
+                        "$teleop_purple_overflow", "$teleop_green_overflow"
                     ]
-                },
-                "total_algae": {
-                    "$add": [
-                        "$auto_algae_net", "$auto_algae_processor",
-                        "$teleop_algae_net", "$teleop_algae_processor"
-                    ]
-                },
-                "total_auto_algae": {
-                    "$add": ["$auto_algae_net", "$auto_algae_processor"]
-                },
-                "total_teleop_algae": {
-                    "$add": ["$teleop_algae_net", "$teleop_algae_processor"]
                 },
                 "climb_success_rate": {
                     "$multiply": [
@@ -615,11 +600,31 @@ def leaderboard():
                         100
                     ]
                 },
-                "deep_climb_success_rate": {
+                "park_success_rate": {
                     "$multiply": [
                         {"$cond": [
-                            {"$gt": ["$deep_climb_attempts", 0]},
-                            {"$divide": ["$deep_climb_successes", "$deep_climb_attempts"]},
+                            {"$gt": ["$park_attempts", 0]},
+                            {"$divide": ["$park_successes", "$park_attempts"]},
+                            0
+                        ]},
+                        100
+                    ]
+                },
+                "complete_park_success_rate": {
+                    "$multiply": [
+                        {"$cond": [
+                            {"$gt": ["$complete_park_attempts", 0]},
+                            {"$divide": ["$complete_park_successes", "$complete_park_attempts"]},
+                            0
+                        ]},
+                        100
+                    ]
+                },
+                "stacked_park_success_rate": {
+                    "$multiply": [
+                        {"$cond": [
+                            {"$gt": ["$stacked_park_attempts", 0]},
+                            {"$divide": ["$stacked_park_successes", "$stacked_park_attempts"]},
                             0
                         ]},
                         100
@@ -631,30 +636,24 @@ def leaderboard():
 
         # Add sorting based on selected type
         sort_field = {
-            'coral': 'total_coral',
-            'auto_coral': 'total_auto_coral',
-            'teleop_coral': 'total_teleop_coral',
-            'algae': 'total_algae',
-            'auto_algae': 'total_auto_algae',
-            'teleop_algae': 'total_teleop_algae',
-            'deep_climb': 'deep_climb_success_rate',
-        }.get(sort_type, 'total_coral')
-
-        if sort_type == 'deep_climb':
-            pipeline.insert(-1, {
-                "$match": {
-                    "deep_climb_attempts": {"$gt": 0}
-                }
-            })
+            'total': 'total_score',
+            'auto': 'total_auto',
+            'teleop': 'total_teleop',
+            'climb': 'climb_success_rate',
+            'park': 'park_success_rate',
+            'complete_park': 'complete_park_success_rate',
+            'stacked_park': 'stacked_park_success_rate'
+        }.get(sort_type, 'total_score')
 
         pipeline.append({"$sort": {sort_field: -1}})
+
         teams = list(scouting_manager.db.team_data.aggregate(pipeline))
-        current_app.logger.info(f"Successfully fetched leaderboard {teams} for user {current_user.username if current_user.is_authenticated else 'Anonymous'}")
+        
         return render_template("scouting/leaderboard.html", teams=teams, current_sort=sort_type, 
                               events=events, selected_event=selected_event)
     except Exception as e:
         current_app.logger.error(f"Error in leaderboard: {str(e)}", exc_info=True)
-        return render_template("scouting/leaderboard.html", teams=[], current_sort='coral', 
+        return render_template("scouting/leaderboard.html", teams=[], current_sort='total', 
                               events=[], selected_event='all')
 
 @scouting_bp.route("/scouter-leaderboard")
@@ -766,32 +765,114 @@ def scouter_leaderboard():
 
 
 # TODO
-@scouting_bp.route("/api/tba/events")
+@scouting_bp.route("/api/ftc/events")
 @login_required
 # @limiter.limit("30 per minute")
-def get_tba_events():
+def get_ftc_events():
     try:
-        year = datetime.now().year
-        tba = TBAInterface()
-        events = tba.get_current_events(year)
-        current_app.logger.info(f"Successfully fetched TBA events {events} for user {current_user.username if current_user.is_authenticated else 'Anonymous'}")
+        current_date = datetime.now()
+        season = current_date.year
+        if current_date.month < 9:
+            season -= 1
+            
+        events_list = ftc.get_all_events(season) or []
+        events = {}
+        for e in events_list:
+            events[e['name']] = {
+                'key': e['code'],
+                'start_date': e['start']
+            }
+            
+        current_app.logger.info(f"Successfully fetched FTC events {events} for user {current_user.username if current_user.is_authenticated else 'Anonymous'}")
         return jsonify(events)
     except Exception as e:
-        current_app.logger.error(f"Error getting TBA events: {e}")
+        current_app.logger.error(f"Error getting FTC events: {e}")
         return jsonify({"error": "Failed to fetch events"}), 500
 
 #TODO
-@scouting_bp.route("/api/tba/matches/<event_key>")
+@scouting_bp.route("/api/ftc/matches/<event_code>")
 @login_required
 # @limiter.limit("30 per minute")
-def get_tba_matches(event_key):
+def get_ftc_matches(event_code):
     try:
-        tba = TBAInterface()
-        matches = tba.get_event_matches(event_key)
-        current_app.logger.info(f"Successfully fetched TBA matches {matches} for user {current_user.username if current_user.is_authenticated else 'Anonymous'}")
-        return jsonify(matches)
+        current_date = datetime.now()
+        season = current_date.year
+        if current_date.month < 9:
+            season -= 1
+            
+        matches = ftc.get_all_matches(season, event_code) or []
+        
+        # Sort matches by ID to ensure correct order
+        matches.sort(key=lambda x: x.get('id', 0))
+        
+        formatted_matches = {}
+        
+        # Counters for match numbering
+        qual_counter = 1
+        semi_counter = 1
+        final_counter = 1
+
+        for m in matches:
+            # Map comp_level
+            level = m.get('tournamentLevel', 'Quals')
+            if level == 'Quals' or level == 'QUALIFICATION':
+                comp_level = 'qm'
+                prefix = 'Qual'
+                match_num = qual_counter
+                qual_counter += 1
+            elif level == 'Semis' or level == 'SEMIFINAL':
+                comp_level = 'sf'
+                prefix = 'Semifinal'
+                match_num = semi_counter
+                semi_counter += 1
+            elif level == 'Finals' or level == 'FINAL':
+                comp_level = 'f'
+                prefix = 'Final'
+                match_num = final_counter
+                final_counter += 1
+            elif level == 'DoubleElim':
+                comp_level = 'de'
+                prefix = 'Match'
+                match_num = m.get('series', 0)
+            else:
+                comp_level = 'qm'
+                prefix = 'Qual'
+                match_num = qual_counter
+                qual_counter += 1
+                
+            match_key = f"{prefix} {match_num}"
+            
+            # Map teams
+            red = []
+            blue = []
+            
+            # Handle different potential team structures
+            if 'teams' in m:
+                for t in m['teams']:
+                    team_num = str(t.get('teamNumber'))
+                    if t.get('alliance') == 'Red':
+                        red.append(team_num)
+                    elif t.get('alliance') == 'Blue':
+                        blue.append(team_num)
+            elif 'red' in m and 'blue' in m:
+                # Assuming simple dict with team numbers
+                if isinstance(m['red'], list):
+                    red = [str(t) for t in m['red']]
+                if isinstance(m['blue'], list):
+                    blue = [str(t) for t in m['blue']]
+
+            formatted_matches[match_key] = {
+                'red': red,
+                'blue': blue,
+                'comp_level': comp_level,
+                'match_number': match_num,
+                'set_number': m.get('series', None)
+            }
+            
+        current_app.logger.info(f"Successfully fetched FTC matches {formatted_matches} for user {current_user.username if current_user.is_authenticated else 'Anonymous'}")
+        return jsonify(formatted_matches)
     except Exception as e:
-        current_app.logger.error(f"Error getting TBA matches: {e}")
+        current_app.logger.error(f"Error getting FTC matches: {e}")
         return jsonify({"error": "Failed to fetch matches"}), 500
 
 #TODO
@@ -812,7 +893,7 @@ def live_match_status():
     return render_template("scouting/live-match-status.html", **context)
 
 #TODO
-@scouting_bp.route("/api/tba/team-status")
+@scouting_bp.route("/api/ftc/team-status")
 @login_required
 # @limiter.limit("30 per minute")
 def get_team_status():
@@ -824,35 +905,196 @@ def get_team_status():
         return jsonify({"error": "Team number is required"}), 400
     
     try:
-        # Format TBA team key
-        team_key = f"frc{team_number}"
-        
-        # Initialize TBA interface
-        tba = TBAInterface()
-        
-        # If event code not provided, find the most recent event
+        current_date = datetime.now()
+        season = current_date.year
+        if current_date.month < 9:
+            season -= 1
+
         if not event_code:
-            most_recent_event = tba.get_most_recent_active_event(team_key)
-            if most_recent_event:
-                event_code = most_recent_event.get('key')
-                # Also return event details for the UI
-                event_name = most_recent_event.get('name', 'Unknown Event')
+             # Try to find the most recent event for the team
+             team_events = ftc.get_team_events(team_number, season)
+             
+             if team_events:
+                 # Fetch details for each event to get start dates
+                 events_with_dates = []
+                 for e in team_events:
+                     code = e.get('eventCode')
+                     if code:
+                         details = ftc.get_event_details(season, code)
+                         if details:
+                             events_with_dates.append(details)
+                 
+                 if events_with_dates:
+                     # Sort by start date
+                     events_with_dates.sort(key=lambda x: x.get('start', ''))
+                     
+                     # Find the last event that has started (start <= today)
+                     today_str = current_date.strftime('%Y-%m-%d')
+                     selected_event = None
+                     
+                     # Iterate backwards to find the most recent started event
+                     for e in reversed(events_with_dates):
+                         if e.get('start', '9999-99-99') <= today_str:
+                             selected_event = e
+                             break
+                     
+                     # If no event has started yet, pick the first upcoming one
+                     if not selected_event and events_with_dates:
+                         selected_event = events_with_dates[0]
+                         
+                     if selected_event:
+                         event_code = selected_event.get('code')
+             
+             if not event_code:
+                 return jsonify({"error": "No events found for this team"}), 404
+
+        # Get all matches for event
+        all_matches = ftc.get_all_matches(season, event_code) or []
+        
+        # Sort matches by ID to ensure correct order
+        all_matches.sort(key=lambda x: x.get('id', 0))
+        
+        # Counters for match numbering
+        qual_counter = 1
+        semi_counter = 1
+        final_counter = 1
+        
+        # Filter for team and format
+        previous_matches = []
+        upcoming_matches = []
+        
+        for m in all_matches:
+            # Determine match number and prefix
+            level = m.get('tournamentLevel', 'Quals')
+            if level == 'Quals' or level == 'QUALIFICATION':
+                prefix = 'Qual'
+                match_num = qual_counter
+                qual_counter += 1
+            elif level == 'Semis' or level == 'SEMIFINAL':
+                prefix = 'Semifinal'
+                match_num = semi_counter
+                semi_counter += 1
+            elif level == 'Finals' or level == 'FINAL':
+                prefix = 'Final'
+                match_num = final_counter
+                final_counter += 1
+            elif level == 'DoubleElim':
+                prefix = 'Playoffs'
+                match_num = m.get('series', 0)
             else:
-                return jsonify({"error": "No events found for this team"}), 404
+                prefix = 'Qual'
+                match_num = qual_counter
+                qual_counter += 1
+            
+            match_name = f"{prefix} {match_num}"
+
+            in_match = False
+            alliance = 'unknown'
+            
+            if 'teams' in m:
+                for t in m['teams']:
+                    if str(t.get('teamNumber')) == str(team_number):
+                        in_match = True
+                        alliance = t.get('alliance', '').lower()
+                        break
+            elif 'red' in m and 'blue' in m:
+                 if str(team_number) in [str(x) for x in m['red']]:
+                     in_match = True
+                     alliance = 'red'
+                 elif str(team_number) in [str(x) for x in m['blue']]:
+                     in_match = True
+                     alliance = 'blue'
+
+            if in_match:
+                # Determine if played
+                has_score = False
+                red_score = 0
+                blue_score = 0
+                
+                # Check for scores in various potential formats
+                if m.get('scores'):
+                    has_score = True
+                    # Handle nested score objects (FTCScout format)
+                    scores = m['scores']
+                    if isinstance(scores.get('red'), dict):
+                        red_score = scores['red'].get('totalPoints', 0)
+                    else:
+                        red_score = scores.get('red', 0)
+                        
+                    if isinstance(scores.get('blue'), dict):
+                        blue_score = scores['blue'].get('totalPoints', 0)
+                    else:
+                        blue_score = scores.get('blue', 0)
+                elif m.get('redScore') is not None and m.get('blueScore') is not None:
+                    has_score = True
+                    red_score = m.get('redScore')
+                    blue_score = m.get('blueScore')
+                
+                # Parse time
+                match_time = 0
+                # Try multiple time fields in order of preference
+                time_str = m.get('actualStartTime') or m.get('scheduledStartTime') or m.get('postResultTime')
+                
+                if time_str:
+                    try:
+                        # Handle ISO format
+                        match_time = datetime.fromisoformat(time_str.replace('Z', '+00:00')).timestamp()
+                    except (ValueError, TypeError):
+                        # Invalid datetime format, skip this match's time
+                        match_time = None
+                elif m.get('time'): 
+                    match_time = m.get('time')
+
+                match_data = {
+                    'match_name': match_name,
+                    'time': match_time,
+                    'alliance': alliance,
+                    'score': {
+                        'red': red_score,
+                        'blue': blue_score
+                    } if has_score else None
+                }
+                
+                if has_score:
+                    previous_matches.append(match_data)
+                else:
+                    upcoming_matches.append(match_data)
         
-        # Get team status at event (ranking)
-        status = tba.get_team_status_at_event(team_key, event_code)
+        # Get team ranking
+        rankings = ftc.get_event_rankings(season, event_code) or []
+        team_rank = None
+        for r in rankings:
+            if str(r.get('teamNumber')) == str(team_number):
+                team_rank = r
+                break
         
-        # Get team matches at event
-        matches = tba.get_team_matches_at_event(team_key, event_code)
-        current_app.logger.info(f"Successfully fetched team status {status} for user {current_user.username if current_user.is_authenticated else 'Anonymous'}")
+        status = None
+        if team_rank:
+            status = {
+                "qual": {
+                    "ranking": {
+                        "rank": team_rank.get('rank'),
+                        "matches_played": team_rank.get('matchesPlayed'),
+                        "record": {
+                            "wins": team_rank.get('wins'),
+                            "losses": team_rank.get('losses'),
+                            "ties": team_rank.get('ties')
+                        }
+                    }
+                }
+            }
+
+        current_app.logger.info(f"Successfully fetched team status for user {current_user.username if current_user.is_authenticated else 'Anonymous'}")
 
         return jsonify({
             "status": status,
-            "matches": matches,
+            "matches": {
+                "previous": previous_matches,
+                "upcoming": upcoming_matches
+            },
             "event": {
                 "key": event_code,
-                "name": event_name if 'event_name' in locals() else None
+                "name": event_code # Placeholder
             }
         })
     except Exception as e:
@@ -907,10 +1149,8 @@ def get_team_paths():
             }}
         ]
         
-        # Get team info from TBA
-        tba = TBAInterface()
-        team_key = f"frc{team_number}"
-        team_info = tba.get_team(team_key) or {}
+        # Get team info from FTCScout
+        team_info = ftc.get_team(team_number) or {}
         
         # Get paths from database
         paths = list(scouting_manager.db.team_data.aggregate(pipeline))
@@ -919,9 +1159,9 @@ def get_team_paths():
         response = {
             "team_number": team_number,
             "team_info": {
-                "nickname": team_info.get("nickname", "Unknown"),
+                "nickname": team_info.get("name", "Unknown"),
                 "city": team_info.get("city", ""),
-                "state_prov": team_info.get("state_prov", ""),
+                "state_prov": team_info.get("state", ""),
                 "country": team_info.get("country", "")
             },
             "paths": paths
